@@ -208,3 +208,50 @@ def mce_transform(ugen: Ugen) -> Ugen:
         return Mce(ugens=out)
     else:
         raise Exception("mce_transform")
+
+
+def mce_expand(ugen: Ugen) -> Ugen:
+    if isinstance(ugen, Mce):
+        ugen = cast(Mce, ugen)
+        lst: List[Ugen] = []
+        for elem in ugen.ugens:
+            lst.append(mce_expand(elem))
+        return Mce(ugens=lst)
+    elif isinstance(ugen, Mrg):
+        ugen = cast(Mrg, ugen)
+        lst = mce_expand(ugen.left)
+        return Mrg(left=lst, right=ugen.right)
+    else:
+        def rec(ugen: Ugen) -> bool:
+            if isinstance(ugen, Primitive):
+                ins = filter(is_mce, ugen.inputs)
+                return len(ins) != 0
+            else:
+                return False
+        if rec(ugen):
+            return mce_expand(mce_transform(ugen))
+        else:
+            return ugen
+        
+def mce_channel(n, ugen: Ugen) -> Ugen:
+    if isinstance(ugen, Mce):
+        return ugen.ugens[n]
+    else:
+        raise Exception("mce_channel")
+        
+def mce_channels(ugen: Ugen) -> List[Ugen]:
+    if isinstance(ugen, Mce):
+        return ugen.ugens
+    elif isinstance(ugen, Mrg):
+        lst = mce_channels(ugen.left)
+        if len(lst) > 1:
+            mrg1 = Mrg(left=lst[0], right=ugen.right)
+            out = [mrg1]
+            out = out + lst[1:]
+            return out
+        else:
+            raise Exception("mce_channels")
+    else:
+        return [ugen]
+    
+    

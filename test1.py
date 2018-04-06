@@ -9,6 +9,7 @@ import unittest
 from typing import List
 from sc3_1 import Ugen, Constant, Control, Rate, Primitive, Mce, Mrg
 from sc3_1 import extend, rate_of, mce_degree, mce_extend, mce_transform
+from sc3_1 import mce_channels
 
 ugens1: List[Ugen] = []
 ugens1.append(Constant(value=1))
@@ -30,6 +31,7 @@ ugens2 = extend(p1.inputs, 5)
 ct1 = Control(rate=Rate.RateAr, name="Ct1")
 exmg1 = mce_extend(3, mg1)
 mc10 = mce_transform(p3)
+mc11 = mce_channels(mg3)
 
 class TestStringMethods(unittest.TestCase):
     
@@ -45,6 +47,9 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(type(mc10), Mce)
         self.assertEqual(type(mc10.ugens[2]), Primitive)
         self.assertEqual(mc10.ugens[2].name, "P3")
+        self.assertEqual(len(mc11), 2)
+        self.assertEqual(type(mc11[0]), Mrg)
+        self.assertEqual(type(mc11[1]), Primitive)
 
 if __name__ == '__main__':
     unittest.main()
