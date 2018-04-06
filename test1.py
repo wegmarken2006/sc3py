@@ -8,6 +8,7 @@ Created on Fri Apr  6 18:31:52 2018
 import unittest
 from typing import List
 from sc3_1 import Ugen, Constant, Control, Rate, Primitive, Mce, Mrg
+from sc3_1 import extend, rate_of
 
 ugens1: List[Ugen] = []
 ugens1.append(Constant(value=1))
@@ -22,8 +23,11 @@ p3 = Primitive(name="P3", rate=Rate.RateKr, inputs=[mc1, mc3],
                outputs=[Rate.RateIr], special=0, index=0)
 #mc10 := mceTransform(p3)
 #pp3 := mc10.(mce).ugens[2]
+mg1 = Mrg(left = p1, right = mc1)
+mg2 = Mrg(left = p2, right = p1)
 mg3 = Mrg(left=mc1, right=p2)
 ugens2 = extend(p1.inputs, 5)
+ct1 = Control(rate=Rate.RateAr, name="Ct1")
 
 class TestStringMethods(unittest.TestCase):
     
@@ -33,6 +37,7 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(p2.name, "P2")
         self.assertEqual(type(p3), Primitive)
         self.assertEqual(len(ugens2), 5)
+        self.assertEqual(rate_of(ct1), Rate.RateAr)
 
 
 if __name__ == '__main__':

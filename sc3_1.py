@@ -38,16 +38,16 @@ class Control:
         
         
 class Proxy:
-    def __init__(self, primitive: Primitive, index=0):
+    def __init__(self, primitive: Primitive, index=0) -> None:
         self.primitive = primitive
         self.index = index
 
 class Mce:
-    def __init__(self, ugens: List[Ugen]):
+    def __init__(self, ugens: List[Ugen]) -> None:
         self.ugens = ugens
         
 class Mrg:
-    def __init__(self, left: Ugen, right: Ugen):
+    def __init__(self, left: Ugen, right: Ugen) -> None:
         self.left = left
         self.right = right
         
@@ -112,6 +112,35 @@ def is_sink(ugen: Ugen) -> bool:
         if is_sink(ugen.left):
             return True
     else:
-        pass
+        return False
+    
+def max_num(nums: List[int], start):
+    max1 = start
+    for elem in nums:
+        if elem > max1:
+            max1 = elem
+    return max1
+
+def rate_of(ugen: Ugen) -> Rate:
+    if isinstance(ugen, Control):
+        ugen = cast(Control, ugen)
+        return ugen.rate
+    elif isinstance(ugen, Primitive):
+        ugen = cast(Primitive, ugen)
+        return ugen.rate
+    elif isinstance(ugen, Proxy):
+        ugen = cast(Proxy, ugen)
+        return ugen.primitive.rate
+    elif isinstance(ugen, Mce):
+        ugen = cast(Mce, ugen)
+        rates: List[Rate] = []
+        for elem in ugen.ugens:
+            rates = rates + rate_of(elem)
+        return max_num(rates, Rate.RateKr)
+    elif isinstance(ugen, Mrg):
+        ugen = cast(Mrg, ugen)
+        return rate_of(ugen.left)
+    else:
+        return Rate.RateKr
     
 
