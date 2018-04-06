@@ -1,0 +1,39 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Apr  6 18:31:52 2018
+
+@author: Gigi
+"""
+
+import unittest
+from typing import List
+from sc3_1 import Ugen, Constant, Control, Rate, Primitive, Mce, Mrg
+
+ugens1: List[Ugen] = []
+ugens1.append(Constant(value=1))
+ugens1.append(Constant(value=3.3))
+p1 = Primitive(rate=Rate.RateKr, name="P1", inputs=ugens1,	
+               outputs=[Rate.RateKr, Rate.RateIr], index=0, special=0)
+p2 = Primitive(rate=Rate.RateAr, name="P2")
+mc1 = Mce(ugens=[p1, p1])
+mc2 = Mce(ugens=[p1, p2])
+mc3 = Mce(ugens=[p1, p2, mc1])
+p3 = Primitive(name="P3", rate=Rate.RateKr, inputs=[mc1, mc3],
+               outputs=[Rate.RateIr], special=0, index=0)
+#mc10 := mceTransform(p3)
+#pp3 := mc10.(mce).ugens[2]
+mg3 = Mrg(left=mc1, right=p2)
+ugens2 = extend(p1.inputs, 5)
+
+class TestStringMethods(unittest.TestCase):
+    
+
+    def test(self):
+        self.assertEqual(p1.name, "P1")
+        self.assertEqual(p2.name, "P2")
+        self.assertEqual(type(p3), Primitive)
+        self.assertEqual(len(ugens2), 5)
+
+
+if __name__ == '__main__':
+    unittest.main()
