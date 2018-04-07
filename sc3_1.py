@@ -4,7 +4,7 @@ Created on Thu Apr  5 20:58:43 2018
 
 @author: Gigi
 """
-from typing import Union, cast, List
+from typing import Union, cast, List, Tuple
 from enum import Enum
 
 
@@ -101,7 +101,11 @@ class Graph:
         self.controls = controls
         self.ugens = ugens
         
-
+class MMap:
+    def __init__(self, cs: List[int], ks: List[int], us: List[int]) -> None:
+        self.cs = cs
+        self.ks = ks
+        self.us = us
 
 def template(ugen: Ugen):
     if isinstance(ugen, Constant):
@@ -331,4 +335,62 @@ def proxify(ugen: Ugen) -> Ugen:
     else:
         raise Exception("proxify")
     
+def mk_ugen(name, inputs: List[Ugen], outputs: List[Rate], ind=0, sp=0,
+            rate: Rate=Rate.RateKr):
+    pr1 = Primitive(name=name, rate=rate, inputs=inputs, 
+                    outputs=outputs, special=sp, index=ind)
+    return proxify(pr1)
+
+def node_c_value(node: NodeC):
+    return node.value
+    
+def node_k_default(node: NodeK):
+    return node.default
+
+def mk_map(graph: Graph) -> MMap:
+    cs: List[int] = []
+    ks: List[int] = []
+    us: List[int] = []
+    for el1 in graph.constants:
+        cs.append(el1.nid)
+    for el2 in graph.controls:
+        ks.append(el2.nid)
+    for el3 in graph.ugens:
+        us.append(el3.nid)
+    return MMap(cs=cs, ks=ks, us=us)
+
+def fetch(val: int, lst: List[int]) -> int:
+    for ind, elem in enumerate(lst):
+        if elem == val:
+            return ind
+    return -1
+
+def find_c_p(val, node: Node):
+    if isinstance(node, NodeC):
+        return val == node.value
+    raise Exception("find_c_p")
+    
+
+def push_c(val, gr: Graph) -> Tuple[Node, Graph]:
+    node = NodeC(nid=gr.next_id+1, value=val)
+    consts: List[NodeC] = [node]
+    consts = consts + gr.constants
+    gr1 = Graph(next_id=gr.next_id+1, constants=consts, controls=gr.controls,
+                ugens=gr.ugens)
+    return (node, gr1)
+
+def mk_node_c(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
+    if isinstance(ugen, Constant):
+        val = ugen.value
+        for nd in gr.constants:
+            if find_c_p(val, nd):
+                return (nd, gr)
+        return push_c(val, gr)
+    else:
+        raise Exception("make_node_c")
+
+def find_k_p(st: str, node: Node):
+    if isinstance(node, NodeK):
+        return st == node.name
+    raise Exception("find_k_p")
     
