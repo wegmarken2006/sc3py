@@ -13,7 +13,7 @@ from sc3_1 import mce_channels, proxify
 from sc3_1 import NodeC, NodeK, NodeU, Graph, MMap
 from sc3_1 import FromPort, FromPortC, FromPortK, FromPortU
 from sc3_1 import node_c_value, node_k_default, mk_map
-from sc3_1 import find_c_p, find_k_p, mk_node_c
+from sc3_1 import find_c_p, find_k_p, mk_node_c, mk_node_k
 
 ugens1: List[Ugen] = []
 ugens1.append(Constant(value=1))
@@ -57,7 +57,10 @@ gr1 = Graph(next_id=11, constants=[ndc1, ndc2], controls=[ndk1, ndk2],
 m1 = mk_map(gr1)
 n1 = mk_node_c(Constant(value=320), gr1)
 nn = n1[0]
-
+ck1 = Control(name="ndk1", rate=Rate.RateKr, index=3)
+n2 = mk_node_k(ck1, gr1)
+nn2 = n2[0
+         ]
 class TestStringMethods(unittest.TestCase):
     
 
@@ -85,6 +88,7 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(find_c_p(3, nc1), True)
         self.assertEqual(find_k_p("ndk1", ndk1), True)
         self.assertEqual(nn.nid, 20)
+        self.assertEqual(nn2.nid, 30)
         
 
 if __name__ == '__main__':

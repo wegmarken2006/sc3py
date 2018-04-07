@@ -9,8 +9,8 @@ from enum import Enum
 
 
 class Rate(Enum):
-    RateKr = 0
-    RateIr = 1
+    RateIr = 0
+    RateKr = 1
     RateAr = 2
     RateDr = 3
 
@@ -147,7 +147,17 @@ def extend(ugens: List[Ugen], newlen) -> List[Ugen]:
         return extend(out, newlen)
     return out
     
-    
+def rate_id(rate: Rate) -> int:
+    if rate == Rate.RateIr:
+        return 0
+    elif rate == Rate.RateKr:
+        return 1
+    elif rate == Rate.RateAr:
+        return 2
+    elif rate == Rate.RateDr:
+        return 3
+
+
 def is_sink(ugen: Ugen) -> bool:
     if isinstance(ugen, Primitive):
         ugen = cast(Primitive, ugen)
@@ -365,7 +375,7 @@ def fetch(val: int, lst: List[int]) -> int:
             return ind
     return -1
 
-def find_c_p(val, node: Node):
+def find_c_p(val, node: Node) -> bool:
     if isinstance(node, NodeC):
         return val == node.value
     raise Exception("find_c_p")
@@ -389,8 +399,52 @@ def mk_node_c(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
     else:
         raise Exception("make_node_c")
 
-def find_k_p(st: str, node: Node):
+def find_k_p(st: str, node: Node) -> bool:
     if isinstance(node, NodeK):
         return st == node.name
     raise Exception("find_k_p")
     
+def push_k_p(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
+    if isinstance(ugen, Control):
+        node = NodeK(nid=gr.next_id+1, name=ugen.name, default=ugen.index,
+                     rate=ugen.rate)
+        contrs = [node]
+        contrs = contrs + gr.controls
+        gr1 = Graph(next_id=gr.next_id+1, constants=gr.constants, 
+                controls=contrs, ugens=gr.ugens)
+        return (node, gr1)
+    else:
+        raise Exception("push_k_p")
+
+def mk_node_k(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
+    if isinstance(ugen, Control):
+        name = ugen.name
+        for node in gr.controls:
+            if find_k_p(name, node):
+                return (node, gr)
+        return push_k_p(ugen, gr)
+    else:
+        raise Exception("mk_node_k")
+        
+def find_u_p(rate: Rate, name: str, id, node: Node) -> bool:
+    if isinstance(node, NodeU):
+        if node.rate == rate and node.name == name and node.ugen_id == id:
+            return True
+        else:
+            return False
+    raise Exception("find_u_p")
+    
+def push_u(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
+    if isinstance(ugen, Primitive):
+        intrates = map(rate_id, ugen.outputs)
+        node = NodeU(nid=gr.next_id+1, name=ugen.name, rate=ugen.rate,
+                     inputs=ugen.inputs, outputs=intrates, special=ugen.special,
+                     ugen_id=index)
+        ugens = [node]
+        ugens = ugens + gr.ugens
+        gr1 = Graph(next_id=gr.next_id+1, constants=gr.constants, 
+                controls=gr.controls, ugens=ugens)
+        return (node, gr1)
+
+    else:
+        raise Exception("push_u")
