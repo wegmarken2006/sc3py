@@ -13,7 +13,7 @@ from sc3_1 import mce_channels, proxify
 from sc3_1 import NodeC, NodeK, NodeU, Graph, MMap
 from sc3_1 import FromPort, FromPortC, FromPortK, FromPortU
 from sc3_1 import node_c_value, node_k_default, mk_map
-from sc3_1 import find_c_p, find_k_p, mk_node_c, mk_node_k
+from sc3_1 import find_c_p, find_k_p, mk_node_c, mk_node_k, mk_node
 
 ugens1: List[Ugen] = []
 ugens1.append(Constant(value=1))
@@ -26,6 +26,9 @@ mc2 = Mce(ugens=[p1, p2])
 mc3 = Mce(ugens=[p1, p2, mc1])
 p3 = Primitive(name="P3", rate=Rate.RateKr, inputs=[mc1, mc3],
                outputs=[Rate.RateIr], special=0, index=0)
+cs1 = Constant(11)
+p4 = Primitive(rate = Rate.RateAr, name = "p4", inputs = [cs1, cs1],
+                outputs=[Rate.RateIr], special=0, index=0)
 #mc10 := mceTransform(p3)
 #pp3 := mc10.(mce).ugens[2]
 mg1 = Mrg(left = p1, right = mc1)
@@ -59,8 +62,12 @@ n1 = mk_node_c(Constant(value=320), gr1)
 nn = n1[0]
 ck1 = Control(name="ndk1", rate=Rate.RateKr, index=3)
 n2 = mk_node_k(ck1, gr1)
-nn2 = n2[0
-         ]
+nn2 = n2[0]
+n3 = mk_node(Constant(320), gr1)
+nn3 = n3[0]
+n4 = mk_node(p4, gr1)
+nn4 = n4[0]
+
 class TestStringMethods(unittest.TestCase):
     
 
@@ -89,6 +96,8 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(find_k_p("ndk1", ndk1), True)
         self.assertEqual(nn.nid, 20)
         self.assertEqual(nn2.nid, 30)
+        self.assertEqual(nn3.nid, 20)
+        self.assertEqual(nn4.name, "p4")
         
 
 if __name__ == '__main__':

@@ -64,7 +64,7 @@ class FromPortU:
         
 FromPort = Union[FromPortC, FromPortK, FromPortU]
         
-Ugen = Union[Constant, Control, Primitive, Proxy, Mce, Mrg]
+Ugen = Union[Constant, Control, Primitive, Proxy, Mce, Mrg, FromPort]
 
 class NodeC:
     def __init__(self, nid, value) -> None:
@@ -156,7 +156,7 @@ def rate_id(rate: Rate) -> int:
         return 2
     elif rate == Rate.RateDr:
         return 3
-
+    return 0
 
 def is_sink(ugen: Ugen) -> bool:
     if isinstance(ugen, Primitive):
@@ -426,9 +426,9 @@ def mk_node_k(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
     else:
         raise Exception("mk_node_k")
         
-def find_u_p(rate: Rate, name: str, id, node: Node) -> bool:
+def find_u_p(rate: Rate, name: str, id1, node: Node) -> bool:
     if isinstance(node, NodeU):
-        if node.rate == rate and node.name == name and node.ugen_id == id:
+        if node.rate == rate and node.name == name and node.ugen_id == id1:
             return True
         else:
             return False
@@ -439,7 +439,7 @@ def push_u(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
         intrates = map(rate_id, ugen.outputs)
         node = NodeU(nid=gr.next_id+1, name=ugen.name, rate=ugen.rate,
                      inputs=ugen.inputs, outputs=intrates, special=ugen.special,
-                     ugen_id=index)
+                     ugen_id=ugen.index)
         ugens = [node]
         ugens = ugens + gr.ugens
         gr1 = Graph(next_id=gr.next_id+1, constants=gr.constants, 
@@ -448,3 +448,54 @@ def push_u(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
 
     else:
         raise Exception("push_u")
+ 
+    
+def as_from_port(node: Node) -> Ugen:
+    if isinstance(node, NodeC):
+        return FromPortC(port_nid=node.nid)
+    elif isinstance(node, NodeK):
+        return FromPortK(port_nid=node.nid)
+    elif isinstance(node, NodeU):
+        return FromPortU(port_nid=node.nid, port_idx=0)
+       
+def mk_node_u(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
+    def acc(ll: List[Ugen], nn: List[Node], gr: Graph) -> Tuple[List[Node], Graph]:
+        if len(ll) == 0:
+            nn.reverse()
+            return (nn, gr)
+        else:
+            ng = mk_node(ll[0], gr)
+            ng1 = ng[0]
+            ng2 = ng[1]
+            nn = [ng1] + nn
+            return acc(ll, nn, ng2)
+    if isinstance(ugen, Primitive):
+        ng = acc(ugen.inputs, [], gr)
+        gnew = ng[1]
+        ng1 = ng[0]
+        inputs2: List[Ugen] = []
+        for nd in ng1:
+            inputs2.append(as_from_port(nd))
+        rate = ugen.rate
+        name = ugen.name
+        index = ugen.index
+        for nd2 in gnew.ugens:
+            if find_u_p(rate=rate, name=name, id1=index, node=nd2):
+                return (nd2, gnew)
+        pr = Primitive(name=name, rate=rate, inputs=inputs2,
+                       outputs=ugen.outputs, special=ugen.special)
+        tup: Tuple[Node, Graph] = push_u(pr, gnew)
+        return tup
+    else:
+        raise Exception("mk_node_u")
+        
+def mk_node(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:            
+    if isinstance(ugen, Constant):
+        return mk_node_c(ugen, gr)
+    elif isinstance(ugen, Primitive):
+        return mk_node_u(ugen, gr)
+    else:
+        raise Exception("mk_node")
+        
+    
+    
