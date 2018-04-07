@@ -18,11 +18,9 @@ class Constant:
     def __init__(self, value):
         self.value = value
 
-Ugen = Union[Constant]
-
 class Primitive:
     def __init__(self, name: str, rate: Rate=Rate.RateKr, 
-        inputs: List[Ugen]=[], outputs: List[Rate]=[], special=0, index=0) -> None:
+        inputs: List['Ugen']=[], outputs: List[Rate]=[], special=0, index=0) -> None:
         self.rate = rate
         self.name = name
         self.inputs = inputs
@@ -43,16 +41,67 @@ class Proxy:
         self.index = index
 
 class Mce:
-    def __init__(self, ugens: List[Ugen]) -> None:
+    def __init__(self, ugens: List['Ugen']) -> None:
         self.ugens = ugens
         
 class Mrg:
-    def __init__(self, left: Ugen, right: Ugen) -> None:
+    def __init__(self, left: 'Ugen', right: 'Ugen') -> None:
         self.left = left
         self.right = right
         
+class FromPortC:
+    def __init__(self, port_nid) -> None:
+        self.port_nid = port_nid
+    
+class FromPortK:
+    def __init__(self, port_nid) -> None:
+        self.port_nid = port_nid
+
+class FromPortU:
+    def __init__(self, port_nid, port_idx) -> None:
+        self.port_nid = port_nid
+        self.port_idx = port_idx
+        
+FromPort = Union[FromPortC, FromPortK, FromPortU]
         
 Ugen = Union[Constant, Control, Primitive, Proxy, Mce, Mrg]
+
+class NodeC:
+    def __init__(self, nid, value) -> None:
+        self.nid = nid
+        self.value = value
+
+class NodeK:
+    def __init__(self, nid, name: str, 
+                 default=0, rate: Rate=Rate.RateKr) -> None:
+        self.nid = nid
+        self.name = name
+        self.rate = rate
+        self.default = default
+        
+class NodeU:
+    def __init__(self, nid, name: str, 
+                 inputs: List[Ugen], outputs: List[int],
+                 ugen_id, special=0, rate: Rate=Rate.RateKr) -> None:
+        self.nid = nid
+        self.name = name
+        self.rate = rate
+        self.inputs = inputs
+        self.outputs = outputs
+        self.special = special
+        self.ugen_id = ugen_id
+        
+Node = Union[NodeC, NodeK, NodeU]
+
+class Graph:
+    def __init__(self, next_id, constants: List[NodeC],
+                 controls: List[NodeK], ugens: List[NodeU]) -> None:
+        self.next_id = next_id
+        self.constants = constants
+        self.controls = controls
+        self.ugens = ugens
+        
+
 
 def template(ugen: Ugen):
     if isinstance(ugen, Constant):
@@ -111,10 +160,16 @@ def is_sink(ugen: Ugen) -> bool:
         ugen = cast(Mrg, ugen)
         if is_sink(ugen.left):
             return True
-    else:
-        return False
+    return False
     
-def max_num(nums: List[int], start):
+def max_rate(nums: List[Rate], start: Rate) -> Rate:
+    max1 = start
+    for elem in nums:
+        if elem.value > max1.value:
+            max1 = elem
+    return max1
+
+def max_num(nums: List[int], start: int) -> int:
     max1 = start
     for elem in nums:
         if elem > max1:
@@ -135,8 +190,8 @@ def rate_of(ugen: Ugen) -> Rate:
         ugen = cast(Mce, ugen)
         rates: List[Rate] = []
         for elem in ugen.ugens:
-            rates = rates + rate_of(elem)
-        return max_num(rates, Rate.RateKr)
+            rates.append(rate_of(elem))
+        return max_rate(rates, Rate.RateKr)
     elif isinstance(ugen, Mrg):
         ugen = cast(Mrg, ugen)
         return rate_of(ugen.left)
@@ -159,18 +214,18 @@ def mce_extend(n, ugen: Ugen) -> List[Ugen]:
         return extend(ugen.ugens, n)
     elif isinstance(ugen, Mrg):
         ugen = cast(Mrg, ugen)
-        ex = mce_extend(n, ugen.left)
+        ex: List[Ugen] = mce_extend(n, ugen.left)
         if len(ex) > 0:
-            out: List[Ugen] = []
-            out = [ugen] + ex[1:]
+            out: List[Ugen] = [ugen]
+            out = out + ex[1:]
             return out
         else:
             raise Exception("mce_extend")    
     else:
-        out: List[Ugen] = []
+        out2: List[Ugen] = []
         for ind in range(1, n+1):
-            out = out + [ugen]
-        return out
+            out2 = out2 + [ugen]
+        return out2
  
 def is_mce(ugen:Ugen) -> bool:
     if isinstance(ugen, Mce):
@@ -192,18 +247,18 @@ def transposer(ugens: List[List[Ugen]]) -> List[List[Ugen]]:
 def mce_transform(ugen: Ugen) -> Ugen:
     if isinstance(ugen, Primitive):
         ins = filter(is_mce, ugen.inputs)
-        degs = []
+        degs: List[int] = []
         for elem in ins:
             degs = degs + [mce_degree(elem)]
         upr = max_num(degs, 0)
         ext: List[List[Ugen]] = []
         for elem in ugen.inputs:
             ext.append(mce_extend(upr, elem))
-        iet = transposer(ext)
+        iet: List[List[Ugen]] = transposer(ext)
         out: List[Ugen] = []
         p = ugen
-        for elem in iet:
-            p.inputs = elem
+        for elem2 in iet:
+            p.inputs = elem2
             out.append(p)
         return Mce(ugens=out)
     else:
@@ -219,12 +274,12 @@ def mce_expand(ugen: Ugen) -> Ugen:
         return Mce(ugens=lst)
     elif isinstance(ugen, Mrg):
         ugen = cast(Mrg, ugen)
-        lst = mce_expand(ugen.left)
-        return Mrg(left=lst, right=ugen.right)
+        ug1: Ugen = mce_expand(ugen.left)
+        return Mrg(left=ug1, right=ugen.right)
     else:
         def rec(ugen: Ugen) -> bool:
             if isinstance(ugen, Primitive):
-                ins = filter(is_mce, ugen.inputs)
+                ins: List[bool] = filter(is_mce, ugen.inputs)
                 return len(ins) != 0
             else:
                 return False
@@ -246,12 +301,34 @@ def mce_channels(ugen: Ugen) -> List[Ugen]:
         lst = mce_channels(ugen.left)
         if len(lst) > 1:
             mrg1 = Mrg(left=lst[0], right=ugen.right)
-            out = [mrg1]
+            out: List[Ugen] = [mrg1]
             out = out + lst[1:]
             return out
         else:
             raise Exception("mce_channels")
     else:
         return [ugen]
+    
+def proxify(ugen: Ugen) -> Ugen:
+    if isinstance(ugen, Mce):
+        lst: List[Ugen] = []
+        for elem in ugen.ugens:
+            lst.append(proxify(elem))
+        return Mce(ugens=lst)   
+    elif isinstance(ugen, Mrg):
+        prx = proxify(ugen.left)
+        return Mrg(left=prx, right=ugen.right)
+    elif isinstance(ugen, Primitive):
+        ln = len(ugen.inputs)
+        if ln < 2:
+            return ugen
+        else:
+            lst1 = iota(ln, 0, 1)
+            lst2: List[Ugen] = []
+            for ind in lst1:
+                lst2.append(Proxy(primitive=ugen, index=ind))
+            return Mce(ugens=lst2)
+    else:
+        raise Exception("proxify")
     
     
