@@ -468,7 +468,7 @@ def mk_node_u(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
             ng1 = ng[0]
             ng2 = ng[1]
             nn = [ng1] + nn
-            return acc(ll, nn, ng2)
+            return acc(ll[1:], nn, ng2)
     if isinstance(ugen, Primitive):
         ng = acc(ugen.inputs, [], gr)
         gnew = ng[1]
