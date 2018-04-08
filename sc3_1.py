@@ -494,8 +494,50 @@ def mk_node(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
         return mk_node_c(ugen, gr)
     elif isinstance(ugen, Primitive):
         return mk_node_u(ugen, gr)
+    elif isinstance(ugen, Mrg):
+        gn = mk_node(ugen.right, gr)
+        g1 = gn[1]
+        return mk_node(ugen.left, g1)
     else:
         raise Exception("mk_node")
-        
-    
-    
+
+def implicit(num):
+    rates: List[Rate] = []
+    for ind in range(1, num+1):
+        rates.append(Rate.RateKr)
+    node = NodeU(nid=-1, name="Control", inputs=[], outputs=[], ugen_id=0, special=0, rate=Rate.RateKr)
+    return node
+
+def mrg_n(lst: List[Ugen]):
+    if len(lst) == 1:
+        return lst[0]
+    elif len(lst) == 2:
+        return Mrg(left=lst[0], right=lst[1])
+    else:
+        return Mrg(left=lst[0], right=mrg_n(lst[1:]))
+
+def prepare_root(ugen: Ugen):
+    if isinstance(ugen, Mce):
+        return mrg_n(ugen.ugens)
+    elif isinstance(ugen, Mrg):
+        return Mrg(left=prepare_root(ugen.left), right=prepare_root(ugen.right))
+    else:
+        return ugen
+
+def empty_graph() -> Graph:
+    return Graph(0, [], [], [])
+
+def synth(ugen: Ugen) -> Graph:
+    root = prepare_root(ugen)
+    gn = mk_node(root, empty_graph())
+    gr = gn[1]
+    cs = gr.constants
+    ks = gr.controls
+    us = gr.ugens
+    us1 = us
+    us1.reverse()
+    if len(ks) != 0:
+        us1 = [implicit(len(ks))] + us1
+    grout = Graph(next_id=-1,constants=cs, controls=ks, ugens=us1)
+    return grout
+
