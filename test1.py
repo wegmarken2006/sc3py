@@ -14,6 +14,7 @@ from sc3_1 import NodeC, NodeK, NodeU, Graph, MMap
 from sc3_1 import FromPort, FromPortC, FromPortK, FromPortU
 from sc3_1 import node_c_value, node_k_default, mk_map
 from sc3_1 import find_c_p, find_k_p, mk_node_c, mk_node_k, mk_node
+from osc_1 import *
 
 ugens1: List[Ugen] = []
 ugens1.append(Constant(value=1))
@@ -98,6 +99,9 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(nn2.nid, 30)
         self.assertEqual(nn3.nid, 20)
         self.assertEqual(nn4.name, "p4")
+        self.assertEqual(decode_i16(encode_i16(23)), 23)
+        self.assertEqual(decode_i32(encode_i32(23)), 23)
+        
         
 
 if __name__ == '__main__':
