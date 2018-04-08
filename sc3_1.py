@@ -6,6 +6,7 @@ Created on Thu Apr  5 20:58:43 2018
 """
 from typing import Union, cast, List, Tuple
 from enum import Enum
+from osc_1 import *
 
 
 class Rate(Enum):
@@ -107,24 +108,24 @@ class MMap:
         self.ks = ks
         self.us = us
 
+class Input:
+    def __init__(self, u: int, p:intr) -> None:
+        self.u = u
+        self.p = p
+
 def template(ugen: Ugen):
     if isinstance(ugen, Constant):
-        ugen = cast(Constant, ugen)
+        #ugen = cast(Constant, ugen)
         pass
     elif isinstance(ugen, Control):
-        ugen = cast(Control, ugen)
         pass
     elif isinstance(ugen, Primitive):
-        ugen = cast(Primitive, ugen)
         pass
     elif isinstance(ugen, Proxy):
-        ugen = cast(Proxy, ugen)
         pass
     elif isinstance(ugen, Mce):
-        ugen = cast(Mce, ugen)
         pass
     elif isinstance(ugen, Mrg):
-        ugen = cast(Mrg, ugen)
         pass
     else:
         pass
@@ -387,14 +388,14 @@ def push_c(val, gr: Graph) -> Tuple[Node, Graph]:
     consts = consts + gr.constants
     gr1 = Graph(next_id=gr.next_id+1, constants=consts, controls=gr.controls,
                 ugens=gr.ugens)
-    return (node, gr1)
+    return node, gr1
 
 def mk_node_c(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
     if isinstance(ugen, Constant):
         val = ugen.value
         for nd in gr.constants:
             if find_c_p(val, nd):
-                return (nd, gr)
+                return nd, gr
         return push_c(val, gr)
     else:
         raise Exception("make_node_c")
@@ -412,7 +413,7 @@ def push_k_p(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
         contrs = contrs + gr.controls
         gr1 = Graph(next_id=gr.next_id+1, constants=gr.constants, 
                 controls=contrs, ugens=gr.ugens)
-        return (node, gr1)
+        return node, gr1
     else:
         raise Exception("push_k_p")
 
@@ -421,7 +422,7 @@ def mk_node_k(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
         name = ugen.name
         for node in gr.controls:
             if find_k_p(name, node):
-                return (node, gr)
+                return node, gr
         return push_k_p(ugen, gr)
     else:
         raise Exception("mk_node_k")
@@ -444,7 +445,7 @@ def push_u(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
         ugens = ugens + gr.ugens
         gr1 = Graph(next_id=gr.next_id+1, constants=gr.constants, 
                 controls=gr.controls, ugens=ugens)
-        return (node, gr1)
+        return node, gr1
 
     else:
         raise Exception("push_u")
@@ -462,7 +463,7 @@ def mk_node_u(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
     def acc(ll: List[Ugen], nn: List[Node], gr: Graph) -> Tuple[List[Node], Graph]:
         if len(ll) == 0:
             nn.reverse()
-            return (nn, gr)
+            return nn, gr
         else:
             ng = mk_node(ll[0], gr)
             ng1 = ng[0]
@@ -481,7 +482,7 @@ def mk_node_u(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
         index = ugen.index
         for nd2 in gnew.ugens:
             if find_u_p(rate=rate, name=name, id1=index, node=nd2):
-                return (nd2, gnew)
+                return nd2, gnew
         pr = Primitive(name=name, rate=rate, inputs=inputs2,
                        outputs=ugen.outputs, special=ugen.special)
         tup: Tuple[Node, Graph] = push_u(pr, gnew)
@@ -541,3 +542,5 @@ def synth(ugen: Ugen) -> Graph:
     grout = Graph(next_id=-1,constants=cs, controls=ks, ugens=us1)
     return grout
 
+def encode_node_k(mm: MMap, node: NodeK) -> bytes:
+    return str_pstr(node.name) + encode_i16(fetch(node.nid, mm.ks))
