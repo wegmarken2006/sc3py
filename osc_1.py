@@ -4,35 +4,35 @@ BYTEORDER = "big"
 
 
 def encode_i8(val: int) -> bytes:
-    return val.to_bytes(1, BYTEORDER)
+    return val.to_bytes(1, BYTEORDER, signed=True)
 
 
 def encode_i16(val: int) -> bytes:
-    return val.to_bytes(2, BYTEORDER)
+    return val.to_bytes(2, BYTEORDER, signed=True)
 
 
 def encode_i32(val: int) -> bytes:
-    return val.to_bytes(4, BYTEORDER)
+    return val.to_bytes(4, BYTEORDER, signed=True)
 
 
 def encode_i64(val: int) -> bytes:
-    return val.to_bytes(8, BYTEORDER)
+    return val.to_bytes(8, BYTEORDER, signed=True)
 
 
 def decode_i8(btes: bytes) -> int:
-    return int.from_bytes(btes, BYTEORDER)
+    return int.from_bytes(btes, BYTEORDER, signed=True)
 
 
 def decode_i16(btes: bytes) -> int:
-    return int.from_bytes(btes, BYTEORDER)
+    return int.from_bytes(btes, BYTEORDER, signed=True)
 
 
 def decode_i32(btes: bytes) -> int:
-    return int.from_bytes(btes, BYTEORDER)
+    return int.from_bytes(btes, BYTEORDER, signed=True)
 
 
 def decode_i64(btes: bytes) -> int:
-    return int.from_bytes(btes, BYTEORDER)
+    return int.from_bytes(btes, BYTEORDER, signed=True)
 
 
 def encode_f32(val: float) -> bytes:

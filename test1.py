@@ -67,7 +67,8 @@ n3 = mk_node(Constant(320), gr1)
 nn3 = n3[0]
 n4 = mk_node(p4, gr1)
 nn4 = n4[0]
-synthdef("anonymous", sin_osc(400, 0))
+syn1 = synthdef("anonymous", sin_osc(400, 0))
+bsyn1 = b'SCgf\x00\x00\x00\x00\x00\x01\tanonymous\x00\x02\x00\x00\x00\x00C\xc8\x00\x00\x00\x00\x00\x00\x00\x01\x06SinOsc\x01\x00\x02\x00\x01\x00\x00\xff\xff\x00\x01\xff\xff\x00\x00\x01'
 
 
 class TestStringMethods(unittest.TestCase):
@@ -103,6 +104,7 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(decode_i32(encode_i32(23)), 23)
         self.assertEqual(fetch(31, mk_map(gr1).ks), 1)
         self.assertEqual(encode_node_k(mk_map(gr1), ndk1), b'\x04ndk1\x00\x00')
+        self.assertEqual(syn1, bsyn1)
 
 
 if __name__ == '__main__':

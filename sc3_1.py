@@ -261,7 +261,7 @@ def transposer(ugens: List[List[Ugen]]) -> List[List[Ugen]]:
         
 def mce_transform(ugen: Ugen) -> Ugen:
     if isinstance(ugen, Primitive):
-        ins = filter(is_mce, ugen.inputs)
+        ins = [elem for elem in filter(is_mce, ugen.inputs)]
         degs: List[int] = []
         for elem in ins:
             degs = degs + [mce_degree(elem)]
@@ -334,7 +334,7 @@ def proxify(ugen: Ugen) -> Ugen:
         prx = proxify(ugen.left)
         return Mrg(left=prx, right=ugen.right)
     elif isinstance(ugen, Primitive):
-        ln = len(ugen.inputs)
+        ln = len(ugen.outputs)
         if ln < 2:
             return ugen
         else:
@@ -437,7 +437,7 @@ def find_u_p(rate: Rate, name: str, id1, node: Node) -> bool:
     
 def push_u(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
     if isinstance(ugen, Primitive):
-        intrates = map(rate_id, ugen.outputs)
+        intrates = [elem for elem in map(rate_id, ugen.outputs)]
         node = NodeU(nid=gr.next_id+1, name=ugen.name, rate=ugen.rate,
                      inputs=ugen.inputs, outputs=intrates, special=ugen.special,
                      ugen_id=ugen.index)
@@ -566,15 +566,15 @@ def make_input(mm: MMap, fp: Ugen) -> Input:
 def encode_node_u(mm: MMap, nu: NodeU) -> bytes:
     def f1(ug: Ugen) -> Input:
         return make_input(mm, ug)
-    l1 = map(f1, nu.inputs)
-    i2 = cast(bytes, map(encode_input, l1))
-    o2 = cast(bytes, map(encode_i8, nu.outputs))
+    l1 = [elem for elem in map(f1, nu.inputs)]
+    i2 = [elem for elem in map(encode_input, l1)]
+    o2 = [elem for elem in map(encode_i8, nu.outputs)]
     a1 = str_pstr(nu.name)
     a2 = encode_i8(rate_id(nu.rate))
     a3 = encode_i16(len(nu.inputs))
     a4 = encode_i16(len(nu.outputs))
     a5 = encode_i16(nu.special)
-    return a1 + a2 + a3 + a4 + a5 + i2 + o2
+    return a1 + a2 + a3 + a4 + a5 + b''.join(i2) + b''.join(o2)
 
 def encode_graphdef(name: str, graph: Graph) -> bytes:
     mm = mk_map(graph)
@@ -583,21 +583,21 @@ def encode_graphdef(name: str, graph: Graph) -> bytes:
     a3 = encode_i16(1)
     a4 = str_pstr(name)
     a41 = encode_i16(len(graph.constants))
-    l1 = cast(bytes, map(node_c_value, graph.constants))
-    a5 = cast(bytes, map(encode_f32, l1))
+    l1 = [elem for elem in map(node_c_value, graph.constants)]
+    a5 = [elem for elem in map(encode_f32, l1)]
     a6 = encode_i16(len(graph.controls))
-    l2 = cast(bytes, map(node_k_default, graph.controls))
-    a7 = cast(bytes, map(encode_f32, l2))
+    l2 = [elem for elem in map(node_k_default, graph.controls)]
+    a7 = [elem for elem in map(encode_f32, l2)]
     a8 = encode_i16(len(graph.controls))
-    def f1(ks: NodeK):
+    def f1(ks: NodeK) -> bytes:
         return encode_node_k(mm, ks)
-    a9 = cast(bytes, map(f1, graph.controls))
+    a9 = [elem for elem in map(f1, graph.controls)]
     a10 = encode_i16(len(graph.ugens))
-    def f2(us: NodeU):
+    def f2(us: NodeU) -> bytes:
         return encode_node_u(mm, us)
-    a11 = cast(bytes, map(f2, graph.ugens))
+    a11 = [elem for elem in map(f2, graph.ugens)]
 
-    return a1+a2+a3+a4+a41+a5+a6+a7+a8+a9+a10+a11
+    return a1 + a2 +a3 + a4 + a41 + b''.join(a5) + a6 + b''.join(a7) + a8 + b''.join(a9) + a10+b''.join(a11)
 
 def synthdef(name: str, ugen: Ugen) -> bytes:
     graph: Graph = synth(ugen)
@@ -610,8 +610,10 @@ def mk_oscillator(rate: Rate, name: str, inputs: List[Ugen], ou: int) -> Ugen:
     return mk_ugen(name=name,inputs=inputs,outputs=rl,ind=0,sp=0,rate=rate)
 
 def sin_osc(a, b, rate: Rate=Rate.RateKr) -> Ugen:
-    return mk_oscillator(rate, "SinOsc", inputs=[a, b], ou=1)
+    ua = Constant(value=a)
+    ub = Constant(value=b)
+    return mk_oscillator(rate, "SinOsc", inputs=[ua, ub], ou=1)
 
 
 
-sin_osc(400, 0)
+
