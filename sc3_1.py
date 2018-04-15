@@ -109,7 +109,7 @@ class MMap:
         self.us = us
 
 class Input:
-    def __init__(self, u: int, p:intr) -> None:
+    def __init__(self, u: int, p:int) -> None:
         self.u = u
         self.p = p
 
@@ -294,8 +294,8 @@ def mce_expand(ugen: Ugen) -> Ugen:
     else:
         def rec(ugen: Ugen) -> bool:
             if isinstance(ugen, Primitive):
-                ins: List[bool] = filter(is_mce, ugen.inputs)
-                return len(ins) != 0
+                in1: List[bool] = [elem for elem in filter(is_mce, ugen.inputs)]
+                return len(in1) != 0
             else:
                 return False
         if rec(ugen):
@@ -350,7 +350,7 @@ def mk_ugen(name, inputs: List[Ugen], outputs: List[Rate], ind=0, sp=0,
             rate: Rate=Rate.RateKr):
     pr1 = Primitive(name=name, rate=rate, inputs=inputs, 
                     outputs=outputs, special=sp, index=ind)
-    return proxify(pr1)
+    return proxify(mce_expand(pr1))
 
 def node_c_value(node: NodeC):
     return node.value
@@ -544,3 +544,74 @@ def synth(ugen: Ugen) -> Graph:
 
 def encode_node_k(mm: MMap, node: NodeK) -> bytes:
     return str_pstr(node.name) + encode_i16(fetch(node.nid, mm.ks))
+
+def encode_input(inp: Input) -> bytes:
+    out = encode_i16(inp.u) + encode_i16(inp.p)
+    return out
+
+def make_input(mm: MMap, fp: Ugen) -> Input:
+    if isinstance(fp, FromPortC):
+        p = fetch(fp.port_nid, mm.cs)
+        return Input(u=-1, p=p)
+    elif isinstance(fp, FromPortK):
+        p = fetch(fp.port_nid, mm.ks)
+        return Input(u=0, p=p)
+    if isinstance(fp, FromPortU):
+        u = fetch(fp.port_nid, mm.cs)
+        return Input(u=u, p=fp.port_idx)
+    else:
+        raise Exception("make_input")
+
+
+def encode_node_u(mm: MMap, nu: NodeU) -> bytes:
+    def f1(ug: Ugen) -> Input:
+        return make_input(mm, ug)
+    l1 = map(f1, nu.inputs)
+    i2 = cast(bytes, map(encode_input, l1))
+    o2 = cast(bytes, map(encode_i8, nu.outputs))
+    a1 = str_pstr(nu.name)
+    a2 = encode_i8(rate_id(nu.rate))
+    a3 = encode_i16(len(nu.inputs))
+    a4 = encode_i16(len(nu.outputs))
+    a5 = encode_i16(nu.special)
+    return a1 + a2 + a3 + a4 + a5 + i2 + o2
+
+def encode_graphdef(name: str, graph: Graph) -> bytes:
+    mm = mk_map(graph)
+    a1 = encode_str("SCgf")
+    a2 = encode_i32(0)
+    a3 = encode_i16(1)
+    a4 = str_pstr(name)
+    a41 = encode_i16(len(graph.constants))
+    l1 = cast(bytes, map(node_c_value, graph.constants))
+    a5 = cast(bytes, map(encode_f32, l1))
+    a6 = encode_i16(len(graph.controls))
+    l2 = cast(bytes, map(node_k_default, graph.controls))
+    a7 = cast(bytes, map(encode_f32, l2))
+    a8 = encode_i16(len(graph.controls))
+    def f1(ks: NodeK):
+        return encode_node_k(mm, ks)
+    a9 = cast(bytes, map(f1, graph.controls))
+    a10 = encode_i16(len(graph.ugens))
+    def f2(us: NodeU):
+        return encode_node_u(mm, us)
+    a11 = cast(bytes, map(f2, graph.ugens))
+
+    return a1+a2+a3+a4+a41+a5+a6+a7+a8+a9+a10+a11
+
+def synthdef(name: str, ugen: Ugen) -> bytes:
+    graph: Graph = synth(ugen)
+    return encode_graphdef(name, graph)
+
+def mk_oscillator(rate: Rate, name: str, inputs: List[Ugen], ou: int) -> Ugen:
+    rl: List[Rate] = []
+    for _ in range(0, ou):
+        rl.append(rate)
+    return mk_ugen(name=name,inputs=inputs,outputs=rl,ind=0,sp=0,rate=rate)
+
+def sin_osc(a, b, rate: Rate=Rate.RateKr) -> Ugen:
+    return mk_oscillator(rate, "SinOsc", inputs=[a, b], ou=1)
+
+
+
+sin_osc(400, 0)

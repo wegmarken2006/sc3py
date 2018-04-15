@@ -14,7 +14,7 @@ from sc3_1 import NodeC, NodeK, NodeU, Graph, MMap
 from sc3_1 import FromPort, FromPortC, FromPortK, FromPortU
 from sc3_1 import node_c_value, node_k_default, mk_map, fetch
 from sc3_1 import find_c_p, find_k_p, mk_node_c, mk_node_k, mk_node
-from sc3_1 import encode_node_k
+from sc3_1 import encode_node_k, synthdef, sin_osc
 from osc_1 import *
 
 ugens1: List[Ugen] = [Constant(value=1), Constant(value=3.3)]
@@ -67,6 +67,7 @@ n3 = mk_node(Constant(320), gr1)
 nn3 = n3[0]
 n4 = mk_node(p4, gr1)
 nn4 = n4[0]
+synthdef("anonymous", sin_osc(400, 0))
 
 
 class TestStringMethods(unittest.TestCase):
