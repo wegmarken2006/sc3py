@@ -144,3 +144,4 @@ def sc_start():
     send_message(msg1)
     msg1 = Message(name="/g_new", ldatum=[1, ADD_TO_TAIL, 0])
     send_message(msg1)
+

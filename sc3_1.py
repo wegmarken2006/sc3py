@@ -609,10 +609,30 @@ def mk_oscillator(rate: Rate, name: str, inputs: List[Ugen], ou: int) -> Ugen:
         rl.append(rate)
     return mk_ugen(name=name,inputs=inputs,outputs=rl,ind=0,sp=0,rate=rate)
 
-def sin_osc(a, b, rate: Rate=Rate.RateKr) -> Ugen:
-    ua = Constant(value=a)
-    ub = Constant(value=b)
-    return mk_oscillator(rate, "SinOsc", inputs=[ua, ub], ou=1)
+def mk_filter(name: str, inputs: List[Ugen], ou: int, sp: int=0) -> Ugen:
+    rates = [elem for elem in map(rate_of, inputs)]
+    maxrate = max_rate(rates, Rate.RateIr)
+    ou_list: List[Rate]
+    for _ in range(0, ou):
+        ou_list.append(maxrate)
+    return mk_ugen(name=name, inputs=inputs, outputs=ou_list, ind=0, sp=sp, rate=maxrate )
+
+def mk_operator(name: str, inputs: List[Ugen], ind: int) -> Ugen:
+    rates = [elem for elem in map(rate_of, inputs)]
+    maxrate = max_rate(rates, Rate.RateIr)
+    return mk_ugen(name=name, inputs=inputs, outputs=[maxrate], ind=0, sp=0, rate=maxrate)
+
+def mk_unary_operator(ind, fun, ugen: Ugen) -> Ugen:
+    if isinstance(ugen, Constant):
+        return Constant(fun(ugen.value))
+    return mk_operator("UnaryOpUGen", [ugen], ind)
+
+def mk_binary_operator(ind, fun, ugen1: Ugen, ugen2: Ugen) -> Ugen:
+    if isinstance(ugen1, Constant) and isinstance(ugen2, Constant):
+        return Constant(fun(ugen1.value, ugen2.value))
+    return mk_operator("BinaryOpUGen", [ugen1, ugen2], ind)
+
+
 
 
 
