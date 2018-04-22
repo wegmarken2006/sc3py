@@ -145,3 +145,6 @@ def sc_start():
     msg1 = Message(name="/g_new", ldatum=[1, ADD_TO_TAIL, 0])
     send_message(msg1)
 
+def sc_stop():
+    msg1 = Message(name="/g_deepFree", ldatum=[0])
+    send_message(msg1)

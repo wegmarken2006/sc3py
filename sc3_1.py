@@ -604,23 +604,23 @@ def synthdef(name: str, ugen: Ugen) -> bytes:
     graph: Graph = synth(ugen)
     return encode_graphdef(name, graph)
 
-def mk_oscillator_mce(rate: Rate, name: str, inputs: List[Ugen], ugen: Ugen, ou: int) -> Ugen:
+def mk_osc_mce(rate: Rate, name: str, inputs: List[Ugen], ugen: Ugen, ou: int) -> Ugen:
     rl: List[Rate] = []
-    for _ in range(0, ou):
+    for ii in range(0, ou):
         rl.append(rate)
     return mk_ugen(name=name,inputs=inputs + mce_channels(ugen), outputs=rl, ind=0, sp=0, rate=rate)
 
+def mk_osc_id(rate: Rate, name: str, inputs: List[Ugen], ou: int, uid:int=0) -> Ugen:
+    rl: List[Rate] = []
+    for ii in range(0, ou):
+        rl.append(rate)
+    return mk_ugen(name=name, inputs=inputs, outputs=rl, ind=0, sp=uid, rate=rate)
+
 def mk_oscillator(rate: Rate, name: str, inputs: List[Ugen], ou: int) -> Ugen:
     rl: List[Rate] = []
-    for _ in range(0, ou):
+    for ii in range(0, ou):
         rl.append(rate)
-    return mk_ugen(name=name,inputs=inputs,outputs=rl, ind=0, sp=0, rate=rate)
-
-def mk_oscillator_id(rate: Rate, name: str, inputs: List[Ugen], ou: int, uid:int=0) -> Ugen:
-    rl: List[Rate] = []
-    for _ in range(0, ou):
-        rl.append(rate)
-    return mk_ugen(name=name,inputs=inputs,outputs=rl, ind=0, sp=uid, rate=rate)
+    return mk_ugen(name=name, inputs=inputs, outputs=rl, ind=0, sp=0, rate=rate)
 
 def mk_filter(name: str, inputs: List[Ugen], ou: int, sp: int=0) -> Ugen:
     rates = [elem for elem in map(rate_of, inputs)]
@@ -630,10 +630,10 @@ def mk_filter(name: str, inputs: List[Ugen], ou: int, sp: int=0) -> Ugen:
         ou_list.append(maxrate)
     return mk_ugen(name=name, inputs=inputs, outputs=ou_list, ind=0, sp=sp, rate=maxrate )
 
-def mk_operator(name: str, inputs: List[Ugen], ind: int) -> Ugen:
+def mk_operator(name: str, inputs: List[Ugen], ind: int=0) -> Ugen:
     rates = [elem for elem in map(rate_of, inputs)]
     maxrate = max_rate(rates, Rate.RateIr)
-    return mk_ugen(name=name, inputs=inputs, outputs=[maxrate], ind=0, sp=0, rate=maxrate)
+    return mk_ugen(name=name, inputs=inputs, outputs=[maxrate], ind=ind, sp=0, rate=maxrate)
 
 def mk_unary_operator(ind, fun, ugen: Ugen) -> Ugen:
     if isinstance(ugen, Constant):
@@ -644,6 +644,7 @@ def mk_binary_operator(ind, fun, ugen1: Ugen, ugen2: Ugen) -> Ugen:
     if isinstance(ugen1, Constant) and isinstance(ugen2, Constant):
         return Constant(fun(ugen1.value, ugen2.value))
     return mk_operator("BinaryOpUGen", [ugen1, ugen2], ind)
+
 
 
 
