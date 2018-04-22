@@ -14,8 +14,9 @@ from sc3_1 import NodeC, NodeK, NodeU, Graph, MMap
 from sc3_1 import FromPort, FromPortC, FromPortK, FromPortU
 from sc3_1 import node_c_value, node_k_default, mk_map, fetch
 from sc3_1 import find_c_p, find_k_p, mk_node_c, mk_node_k, mk_node
-from sc3_1 import encode_node_k, synthdef, sin_osc
-from osc_1 import *
+from sc3_1 import encode_node_k, synthdef
+from osc_1 import decode_i16, decode_i32, encode_i16, encode_i32
+from ugens import sin_osc
 
 ugens1: List[Ugen] = [Constant(value=1), Constant(value=3.3)]
 p1 = Primitive(rate=Rate.RateKr, name="P1", inputs=ugens1,
@@ -73,7 +74,7 @@ bsyn1 = b'SCgf\x00\x00\x00\x00\x00\x01\tanonymous\x00\x02\x00\x00\x00\x00C\xc8\x
 
 class TestStringMethods(unittest.TestCase):
 
-    def test(self):
+    def test1(self):
         self.assertEqual(p1.name, "P1")
         self.assertEqual(p2.name, "P2")
         self.assertEqual(type(p3), Primitive)
@@ -89,6 +90,8 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(type(mc11[1]), Primitive)
         self.assertEqual(type(mc12.ugens[0]), Mce)
         self.assertEqual(type(mc12.ugens[1]), Primitive)
+
+    def test2(self):
         self.assertEqual(node_c_value(nc1), 3)
         self.assertEqual(node_k_default(nk1), 5)
         self.assertEqual(m1.cs, [20, 21])
@@ -100,6 +103,8 @@ class TestStringMethods(unittest.TestCase):
         self.assertEqual(nn2.nid, 30)
         self.assertEqual(nn3.nid, 20)
         self.assertEqual(nn4.name, "p4")
+
+    def test3(self):
         self.assertEqual(decode_i16(encode_i16(23)), 23)
         self.assertEqual(decode_i32(encode_i32(23)), 23)
         self.assertEqual(fetch(31, mk_map(gr1).ks), 1)

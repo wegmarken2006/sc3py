@@ -9,6 +9,7 @@ from enum import Enum
 from osc_1 import *
 
 
+
 class Rate(Enum):
     RateIr = 0
     RateKr = 1
@@ -138,7 +139,7 @@ def iota(n, init, step) -> List[int]:
         out = out + iota(n-1, init+step, step)
         return out
     
-def extend(ugens: List[Ugen], newlen) -> List[Ugen]:
+def extend(ugens: List[Ugen], newlen: int) -> List[Ugen]:
     ln = len(ugens)
     out: List[Ugen] = []
     if ln > newlen:
@@ -603,11 +604,23 @@ def synthdef(name: str, ugen: Ugen) -> bytes:
     graph: Graph = synth(ugen)
     return encode_graphdef(name, graph)
 
+def mk_oscillator_mce(rate: Rate, name: str, inputs: List[Ugen], ugen: Ugen, ou: int) -> Ugen:
+    rl: List[Rate] = []
+    for _ in range(0, ou):
+        rl.append(rate)
+    return mk_ugen(name=name,inputs=inputs + mce_channels(ugen), outputs=rl, ind=0, sp=0, rate=rate)
+
 def mk_oscillator(rate: Rate, name: str, inputs: List[Ugen], ou: int) -> Ugen:
     rl: List[Rate] = []
     for _ in range(0, ou):
         rl.append(rate)
-    return mk_ugen(name=name,inputs=inputs,outputs=rl,ind=0,sp=0,rate=rate)
+    return mk_ugen(name=name,inputs=inputs,outputs=rl, ind=0, sp=0, rate=rate)
+
+def mk_oscillator_id(rate: Rate, name: str, inputs: List[Ugen], ou: int, uid:int=0) -> Ugen:
+    rl: List[Rate] = []
+    for _ in range(0, ou):
+        rl.append(rate)
+    return mk_ugen(name=name,inputs=inputs,outputs=rl, ind=0, sp=uid, rate=rate)
 
 def mk_filter(name: str, inputs: List[Ugen], ou: int, sp: int=0) -> Ugen:
     rates = [elem for elem in map(rate_of, inputs)]

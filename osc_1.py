@@ -64,7 +64,7 @@ def encode_str(st: str) -> bytes:
     return st.encode()
 
 def encode_string(st: str) -> bytes:
-    return extend(b'\x00', st.encode())
+    return extend_(b'\x00', st.encode())
 
 def str_pstr(st: str) -> bytes:
     return encode_i8(len(st)) + st.encode()
@@ -72,14 +72,14 @@ def str_pstr(st: str) -> bytes:
 def align(n: int):
     return 4 - n%4
 
-def extend(pad: bytes, bts: bytes) -> bytes:
+def extend_(pad: bytes, bts: bytes) -> bytes:
     n = align(len(bts))
     return bts + pad*n
 
 
 def encode_blob(bts: bytes) -> bytes:
     b1 = encode_i32(len(bts))
-    return b1 + extend(b'\x00', bts)
+    return b1 + extend_(b'\x00', bts)
 
 
 def encode_datum(dt: Datum) -> bytes:
