@@ -9,20 +9,21 @@ from enum import Enum
 from osc_1 import *
 
 
-
 class Rate(Enum):
     RateIr = 0
     RateKr = 1
     RateAr = 2
     RateDr = 3
 
+
 class Constant:
     def __init__(self, value):
         self.value = value
 
+
 class Primitive:
-    def __init__(self, name: str, rate: Rate=Rate.RateKr, 
-        inputs: List['Ugen']=[], outputs: List[Rate]=[], special=0, index=0) -> None:
+    def __init__(self, name: str, rate: Rate = Rate.RateKr,
+                 inputs: List['Ugen'] = [], outputs: List[Rate] = [], special=0, index=0) -> None:
         self.rate = rate
         self.name = name
         self.inputs = inputs
@@ -30,61 +31,71 @@ class Primitive:
         self.special = special
         self.index = index
 
+
 class Control:
-    def __init__(self, name: str, rate: Rate=Rate.RateKr, index=0) -> None:
+    def __init__(self, name: str, rate: Rate = Rate.RateKr, index=0) -> None:
         self.rate = rate
         self.name = name
         self.index = index
-        
-        
+
+
 class Proxy:
     def __init__(self, primitive: Primitive, index=0) -> None:
         self.primitive = primitive
         self.index = index
 
+
 class Mce:
     def __init__(self, ugens: List['Ugen']) -> None:
         self.ugens = ugens
-        
+
+
 class Mrg:
     def __init__(self, left: 'Ugen', right: 'Ugen') -> None:
         self.left = left
         self.right = right
-        
+
+
 class FromPortC:
     def __init__(self, port_nid) -> None:
         self.port_nid = port_nid
-    
+
+
 class FromPortK:
     def __init__(self, port_nid) -> None:
         self.port_nid = port_nid
+
 
 class FromPortU:
     def __init__(self, port_nid, port_idx) -> None:
         self.port_nid = port_nid
         self.port_idx = port_idx
-        
+
+
 FromPort = Union[FromPortC, FromPortK, FromPortU]
-        
+
 Ugen = Union[Constant, Control, Primitive, Proxy, Mce, Mrg, FromPort]
+
 
 class NodeC:
     def __init__(self, nid, value) -> None:
         self.nid = nid
         self.value = value
 
+
 class NodeK:
-    def __init__(self, nid, name: str, 
-                 default=0, rate: Rate=Rate.RateKr) -> None:
+    def __init__(self, nid, name: str,
+                 default=0, rate: Rate = Rate.RateKr) -> None:
         self.nid = nid
         self.name = name
         self.rate = rate
         self.default = default
-        
+
+
 class NodeU:
-    def __init__(self, nid, name: str, 
+    def __init__(self, nid, name: str,
                  inputs: List[Ugen], outputs: List[int],
-                 ugen_id, special=0, rate: Rate=Rate.RateKr) -> None:
+                 ugen_id, special=0, rate: Rate = Rate.RateKr) -> None:
         self.nid = nid
         self.name = name
         self.rate = rate
@@ -92,8 +103,10 @@ class NodeU:
         self.outputs = outputs
         self.special = special
         self.ugen_id = ugen_id
-        
+
+
 Node = Union[NodeC, NodeK, NodeU]
+
 
 class Graph:
     def __init__(self, next_id, constants: List[NodeC],
@@ -102,21 +115,24 @@ class Graph:
         self.constants = constants
         self.controls = controls
         self.ugens = ugens
-        
+
+
 class MMap:
     def __init__(self, cs: List[int], ks: List[int], us: List[int]) -> None:
         self.cs = cs
         self.ks = ks
         self.us = us
 
+
 class Input:
-    def __init__(self, u: int, p:int) -> None:
+    def __init__(self, u: int, p: int) -> None:
         self.u = u
         self.p = p
 
+
 def template(ugen: Ugen):
     if isinstance(ugen, Constant):
-        #ugen = cast(Constant, ugen)
+        # ugen = cast(Constant, ugen)
         pass
     elif isinstance(ugen, Control):
         pass
@@ -131,24 +147,27 @@ def template(ugen: Ugen):
     else:
         pass
 
+
 def iota(n, init, step) -> List[int]:
     if n == 0:
         return []
     else:
         out = [init]
-        out = out + iota(n-1, init+step, step)
+        out = out + iota(n - 1, init + step, step)
         return out
-    
+
+
 def extend(ugens: List[Ugen], newlen: int) -> List[Ugen]:
     ln = len(ugens)
     out: List[Ugen] = []
     if ln > newlen:
         out = ugens[0:newlen]
-    else: 
+    else:
         out = ugens + ugens
         return extend(out, newlen)
     return out
-    
+
+
 def rate_id(rate: Rate) -> int:
     if rate == Rate.RateIr:
         return 0
@@ -159,6 +178,7 @@ def rate_id(rate: Rate) -> int:
     elif rate == Rate.RateDr:
         return 3
     return 0
+
 
 def is_sink(ugen: Ugen) -> bool:
     if isinstance(ugen, Primitive):
@@ -177,7 +197,8 @@ def is_sink(ugen: Ugen) -> bool:
         if is_sink(ugen.left):
             return True
     return False
-    
+
+
 def max_rate(nums: List[Rate], start: Rate) -> Rate:
     max1 = start
     for elem in nums:
@@ -185,12 +206,14 @@ def max_rate(nums: List[Rate], start: Rate) -> Rate:
             max1 = elem
     return max1
 
+
 def max_num(nums: List[int], start: int) -> int:
     max1 = start
     for elem in nums:
         if elem > max1:
             max1 = elem
     return max1
+
 
 def rate_of(ugen: Ugen) -> Rate:
     if isinstance(ugen, Control):
@@ -213,7 +236,8 @@ def rate_of(ugen: Ugen) -> Rate:
         return rate_of(ugen.left)
     else:
         return Rate.RateKr
-    
+
+
 def mce_degree(ugen: Ugen) -> int:
     if isinstance(ugen, Mce):
         ugen = cast(Mce, ugen)
@@ -223,7 +247,8 @@ def mce_degree(ugen: Ugen) -> int:
         return mce_degree(ugen.left)
     else:
         raise Exception("mce_degree")
- 
+
+
 def mce_extend(n, ugen: Ugen) -> List[Ugen]:
     if isinstance(ugen, Mce):
         ugen = cast(Mce, ugen)
@@ -236,19 +261,21 @@ def mce_extend(n, ugen: Ugen) -> List[Ugen]:
             out = out + ex[1:]
             return out
         else:
-            raise Exception("mce_extend")    
+            raise Exception("mce_extend")
     else:
         out2: List[Ugen] = []
-        for ind in range(1, n+1):
+        for ind in range(1, n + 1):
             out2 = out2 + [ugen]
         return out2
- 
-def is_mce(ugen:Ugen) -> bool:
+
+
+def is_mce(ugen: Ugen) -> bool:
     if isinstance(ugen, Mce):
         return True
     else:
         return False
-    
+
+
 def transposer(ugens: List[List[Ugen]]) -> List[List[Ugen]]:
     len1 = len(ugens)
     len2 = len(ugens[0])
@@ -259,7 +286,8 @@ def transposer(ugens: List[List[Ugen]]) -> List[List[Ugen]]:
         for ind1 in range(0, len1):
             out[ind2].append(ugens[ind1][ind2])
     return out
-        
+
+
 def mce_transform(ugen: Ugen) -> Ugen:
     if isinstance(ugen, Primitive):
         ins = [elem for elem in filter(is_mce, ugen.inputs)]
@@ -295,21 +323,24 @@ def mce_expand(ugen: Ugen) -> Ugen:
     else:
         def rec(ugen: Ugen) -> bool:
             if isinstance(ugen, Primitive):
-                in1: List[bool] = [elem for elem in filter(is_mce, ugen.inputs)]
+                in1: List[Ugen] = [elem for elem in filter(is_mce, ugen.inputs)]
                 return len(in1) != 0
             else:
                 return False
+
         if rec(ugen):
             return mce_expand(mce_transform(ugen))
         else:
             return ugen
-        
+
+
 def mce_channel(n, ugen: Ugen) -> Ugen:
     if isinstance(ugen, Mce):
         return ugen.ugens[n]
     else:
         raise Exception("mce_channel")
-        
+
+
 def mce_channels(ugen: Ugen) -> List[Ugen]:
     if isinstance(ugen, Mce):
         return ugen.ugens
@@ -324,13 +355,14 @@ def mce_channels(ugen: Ugen) -> List[Ugen]:
             raise Exception("mce_channels")
     else:
         return [ugen]
-    
+
+
 def proxify(ugen: Ugen) -> Ugen:
     if isinstance(ugen, Mce):
         lst: List[Ugen] = []
         for elem in ugen.ugens:
             lst.append(proxify(elem))
-        return Mce(ugens=lst)   
+        return Mce(ugens=lst)
     elif isinstance(ugen, Mrg):
         prx = proxify(ugen.left)
         return Mrg(left=prx, right=ugen.right)
@@ -346,18 +378,22 @@ def proxify(ugen: Ugen) -> Ugen:
             return Mce(ugens=lst2)
     else:
         raise Exception("proxify")
-    
+
+
 def mk_ugen(name, inputs: List[Ugen], outputs: List[Rate], ind=0, sp=0,
-            rate: Rate=Rate.RateKr):
-    pr1 = Primitive(name=name, rate=rate, inputs=inputs, 
+            rate: Rate = Rate.RateKr):
+    pr1 = Primitive(name=name, rate=rate, inputs=inputs,
                     outputs=outputs, special=sp, index=ind)
     return proxify(mce_expand(pr1))
 
+
 def node_c_value(node: NodeC):
     return node.value
-    
+
+
 def node_k_default(node: NodeK):
     return node.default
+
 
 def mk_map(graph: Graph) -> MMap:
     cs: List[int] = []
@@ -371,25 +407,28 @@ def mk_map(graph: Graph) -> MMap:
         us.append(el3.nid)
     return MMap(cs=cs, ks=ks, us=us)
 
+
 def fetch(val: int, lst: List[int]) -> int:
     for ind, elem in enumerate(lst):
         if elem == val:
             return ind
     return -1
 
+
 def find_c_p(val, node: Node) -> bool:
     if isinstance(node, NodeC):
         return val == node.value
     raise Exception("find_c_p")
-    
+
 
 def push_c(val, gr: Graph) -> Tuple[Node, Graph]:
-    node = NodeC(nid=gr.next_id+1, value=val)
+    node = NodeC(nid=gr.next_id + 1, value=val)
     consts: List[NodeC] = [node]
     consts = consts + gr.constants
-    gr1 = Graph(next_id=gr.next_id+1, constants=consts, controls=gr.controls,
+    gr1 = Graph(next_id=gr.next_id + 1, constants=consts, controls=gr.controls,
                 ugens=gr.ugens)
     return node, gr1
+
 
 def mk_node_c(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
     if isinstance(ugen, Constant):
@@ -401,22 +440,25 @@ def mk_node_c(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
     else:
         raise Exception("make_node_c")
 
+
 def find_k_p(st: str, node: Node) -> bool:
     if isinstance(node, NodeK):
         return st == node.name
     raise Exception("find_k_p")
-    
+
+
 def push_k_p(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
     if isinstance(ugen, Control):
-        node = NodeK(nid=gr.next_id+1, name=ugen.name, default=ugen.index,
+        node = NodeK(nid=gr.next_id + 1, name=ugen.name, default=ugen.index,
                      rate=ugen.rate)
         contrs = [node]
         contrs = contrs + gr.controls
-        gr1 = Graph(next_id=gr.next_id+1, constants=gr.constants, 
-                controls=contrs, ugens=gr.ugens)
+        gr1 = Graph(next_id=gr.next_id + 1, constants=gr.constants,
+                    controls=contrs, ugens=gr.ugens)
         return node, gr1
     else:
         raise Exception("push_k_p")
+
 
 def mk_node_k(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
     if isinstance(ugen, Control):
@@ -427,7 +469,8 @@ def mk_node_k(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
         return push_k_p(ugen, gr)
     else:
         raise Exception("mk_node_k")
-        
+
+
 def find_u_p(rate: Rate, name: str, id1, node: Node) -> bool:
     if isinstance(node, NodeU):
         if node.rate == rate and node.name == name and node.ugen_id == id1:
@@ -435,23 +478,24 @@ def find_u_p(rate: Rate, name: str, id1, node: Node) -> bool:
         else:
             return False
     raise Exception("find_u_p")
-    
+
+
 def push_u(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
     if isinstance(ugen, Primitive):
         intrates = [elem for elem in map(rate_id, ugen.outputs)]
-        node = NodeU(nid=gr.next_id+1, name=ugen.name, rate=ugen.rate,
+        node = NodeU(nid=gr.next_id + 1, name=ugen.name, rate=ugen.rate,
                      inputs=ugen.inputs, outputs=intrates, special=ugen.special,
                      ugen_id=ugen.index)
         ugens = [node]
         ugens = ugens + gr.ugens
-        gr1 = Graph(next_id=gr.next_id+1, constants=gr.constants, 
-                controls=gr.controls, ugens=ugens)
+        gr1 = Graph(next_id=gr.next_id + 1, constants=gr.constants,
+                    controls=gr.controls, ugens=ugens)
         return node, gr1
 
     else:
         raise Exception("push_u")
- 
-    
+
+
 def as_from_port(node: Node) -> Ugen:
     if isinstance(node, NodeC):
         return FromPortC(port_nid=node.nid)
@@ -459,7 +503,8 @@ def as_from_port(node: Node) -> Ugen:
         return FromPortK(port_nid=node.nid)
     elif isinstance(node, NodeU):
         return FromPortU(port_nid=node.nid, port_idx=0)
-       
+
+
 def mk_node_u(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
     def acc(ll: List[Ugen], nn: List[Node], gr: Graph) -> Tuple[List[Node], Graph]:
         if len(ll) == 0:
@@ -471,6 +516,7 @@ def mk_node_u(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
             ng2 = ng[1]
             nn = [ng1] + nn
             return acc(ll[1:], nn, ng2)
+
     if isinstance(ugen, Primitive):
         ng = acc(ugen.inputs, [], gr)
         gnew = ng[1]
@@ -490,8 +536,9 @@ def mk_node_u(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
         return tup
     else:
         raise Exception("mk_node_u")
-        
-def mk_node(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:            
+
+
+def mk_node(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
     if isinstance(ugen, Constant):
         return mk_node_c(ugen, gr)
     elif isinstance(ugen, Primitive):
@@ -503,12 +550,14 @@ def mk_node(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
     else:
         raise Exception("mk_node")
 
+
 def implicit(num):
     rates: List[Rate] = []
-    for ind in range(1, num+1):
+    for ind in range(1, num + 1):
         rates.append(Rate.RateKr)
     node = NodeU(nid=-1, name="Control", inputs=[], outputs=[], ugen_id=0, special=0, rate=Rate.RateKr)
     return node
+
 
 def mrg_n(lst: List[Ugen]):
     if len(lst) == 1:
@@ -518,6 +567,7 @@ def mrg_n(lst: List[Ugen]):
     else:
         return Mrg(left=lst[0], right=mrg_n(lst[1:]))
 
+
 def prepare_root(ugen: Ugen):
     if isinstance(ugen, Mce):
         return mrg_n(ugen.ugens)
@@ -526,8 +576,10 @@ def prepare_root(ugen: Ugen):
     else:
         return ugen
 
+
 def empty_graph() -> Graph:
     return Graph(0, [], [], [])
+
 
 def synth(ugen: Ugen) -> Graph:
     root = prepare_root(ugen)
@@ -540,15 +592,18 @@ def synth(ugen: Ugen) -> Graph:
     us1.reverse()
     if len(ks) != 0:
         us1 = [implicit(len(ks))] + us1
-    grout = Graph(next_id=-1,constants=cs, controls=ks, ugens=us1)
+    grout = Graph(next_id=-1, constants=cs, controls=ks, ugens=us1)
     return grout
+
 
 def encode_node_k(mm: MMap, node: NodeK) -> bytes:
     return str_pstr(node.name) + encode_i16(fetch(node.nid, mm.ks))
 
+
 def encode_input(inp: Input) -> bytes:
     out = encode_i16(inp.u) + encode_i16(inp.p)
     return out
+
 
 def make_input(mm: MMap, fp: Ugen) -> Input:
     if isinstance(fp, FromPortC):
@@ -567,6 +622,7 @@ def make_input(mm: MMap, fp: Ugen) -> Input:
 def encode_node_u(mm: MMap, nu: NodeU) -> bytes:
     def f1(ug: Ugen) -> Input:
         return make_input(mm, ug)
+
     l1 = [elem for elem in map(f1, nu.inputs)]
     i2 = [elem for elem in map(encode_input, l1)]
     o2 = [elem for elem in map(encode_i8, nu.outputs)]
@@ -576,6 +632,7 @@ def encode_node_u(mm: MMap, nu: NodeU) -> bytes:
     a4 = encode_i16(len(nu.outputs))
     a5 = encode_i16(nu.special)
     return a1 + a2 + a3 + a4 + a5 + b''.join(i2) + b''.join(o2)
+
 
 def encode_graphdef(name: str, graph: Graph) -> bytes:
     mm = mk_map(graph)
@@ -590,31 +647,39 @@ def encode_graphdef(name: str, graph: Graph) -> bytes:
     l2 = [elem for elem in map(node_k_default, graph.controls)]
     a7 = [elem for elem in map(encode_f32, l2)]
     a8 = encode_i16(len(graph.controls))
+
     def f1(ks: NodeK) -> bytes:
         return encode_node_k(mm, ks)
+
     a9 = [elem for elem in map(f1, graph.controls)]
     a10 = encode_i16(len(graph.ugens))
+
     def f2(us: NodeU) -> bytes:
         return encode_node_u(mm, us)
+
     a11 = [elem for elem in map(f2, graph.ugens)]
 
-    return a1 + a2 +a3 + a4 + a41 + b''.join(a5) + a6 + b''.join(a7) + a8 + b''.join(a9) + a10+b''.join(a11)
+    return a1 + a2 + a3 + a4 + a41 + b''.join(a5) + a6 + b''.join(a7) + a8 + b''.join(a9) + a10 + b''.join(a11)
+
 
 def synthdef(name: str, ugen: Ugen) -> bytes:
     graph: Graph = synth(ugen)
     return encode_graphdef(name, graph)
 
+
 def mk_osc_mce(rate: Rate, name: str, inputs: List[Ugen], ugen: Ugen, ou: int) -> Ugen:
     rl: List[Rate] = []
     for ii in range(0, ou):
         rl.append(rate)
-    return mk_ugen(name=name,inputs=inputs + mce_channels(ugen), outputs=rl, ind=0, sp=0, rate=rate)
+    return mk_ugen(name=name, inputs=inputs + mce_channels(ugen), outputs=rl, ind=0, sp=0, rate=rate)
 
-def mk_osc_id(rate: Rate, name: str, inputs: List[Ugen], ou: int, uid:int=0) -> Ugen:
+
+def mk_osc_id(rate: Rate, name: str, inputs: List[Ugen], ou: int, uid: int = 0) -> Ugen:
     rl: List[Rate] = []
     for ii in range(0, ou):
         rl.append(rate)
     return mk_ugen(name=name, inputs=inputs, outputs=rl, ind=0, sp=uid, rate=rate)
+
 
 def mk_oscillator(rate: Rate, name: str, inputs: List[Ugen], ou: int) -> Ugen:
     rl: List[Rate] = []
@@ -622,23 +687,31 @@ def mk_oscillator(rate: Rate, name: str, inputs: List[Ugen], ou: int) -> Ugen:
         rl.append(rate)
     return mk_ugen(name=name, inputs=inputs, outputs=rl, ind=0, sp=0, rate=rate)
 
-def mk_filter(name: str, inputs: List[Ugen], ou: int, sp: int=0) -> Ugen:
+
+def mk_filter(name: str, inputs: List[Ugen], ou: int, sp: int = 0) -> Ugen:
     rates = [elem for elem in map(rate_of, inputs)]
     maxrate = max_rate(rates, Rate.RateIr)
-    ou_list: List[Rate]
+    ou_list: List[Rate] = []
     for _ in range(0, ou):
         ou_list.append(maxrate)
-    return mk_ugen(name=name, inputs=inputs, outputs=ou_list, ind=0, sp=sp, rate=maxrate )
+    return mk_ugen(name=name, inputs=inputs, outputs=ou_list, ind=0, sp=sp, rate=maxrate)
 
-def mk_operator(name: str, inputs: List[Ugen], ind: int=0) -> Ugen:
+
+def mk_filter_mce(name: str, inputs: List[Ugen], ugen: Ugen, ou: int) -> Ugen:
+    return mk_filter(name=name, inputs=inputs + mce_channels(ugen), ou=ou)
+
+
+def mk_operator(name: str, inputs: List[Ugen], ind: int = 0) -> Ugen:
     rates = [elem for elem in map(rate_of, inputs)]
     maxrate = max_rate(rates, Rate.RateIr)
     return mk_ugen(name=name, inputs=inputs, outputs=[maxrate], ind=ind, sp=0, rate=maxrate)
+
 
 def mk_unary_operator(ind, fun, ugen: Ugen) -> Ugen:
     if isinstance(ugen, Constant):
         return Constant(fun(ugen.value))
     return mk_operator("UnaryOpUGen", [ugen], ind)
+
 
 def mk_binary_operator(ind, fun, ugen1: Ugen, ugen2: Ugen) -> Ugen:
     if isinstance(ugen1, Constant) and isinstance(ugen2, Constant):
@@ -646,8 +719,23 @@ def mk_binary_operator(ind, fun, ugen1: Ugen, ugen2: Ugen) -> Ugen:
     return mk_operator("BinaryOpUGen", [ugen1, ugen2], ind)
 
 
+def sc_start():
+    osc_setport(57110)
+    msg1 = Message(name="/notify", ldatum=[1])
+    send_message(msg1)
+    msg1 = Message(name="/g_new", ldatum=[1, ADD_TO_TAIL, 0])
+    send_message(msg1)
 
 
+def sc_stop():
+    msg1 = Message(name="/g_deepFree", ldatum=[0])
+    send_message(msg1)
 
 
-
+def sc_play(ugen: Ugen):
+    name = "anonymous"
+    synd = synthdef(name, ugen)
+    msg1 = Message(name="/d_recv", ldatum=[synd])
+    send_message(msg1)
+    msg1 = Message(name="/s_new", ldatum=[name, -1, ADD_TO_TAIL, 1])
+    send_message(msg1)

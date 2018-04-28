@@ -1,5 +1,5 @@
 from sc3_1 import mk_oscillator, mk_filter, mk_unary_operator, mk_binary_operator
-from sc3_1 import mk_osc_id
+from sc3_1 import mk_osc_id, mk_filter_mce
 from sc3_1 import mk_osc_mce
 from sc3_1 import Constant, Ugen, Rate
 from typing import List
@@ -31,8 +31,11 @@ def const_list(*args) -> List[Constant]:
     return out
 
 # oscillators
-def sin_osc(freq, phase=0, rate: Rate=Rate.RateAr) -> Ugen:
-    return mk_oscillator(rate, "SinOsc", inputs=const_list(freq, phase), ou=1)
+def sin_osc(freq, phase=0, rate: Rate=Rate.RateKr) -> Ugen:
+    uf = Constant(freq)
+    uph = Constant(phase)
+    return mk_oscillator(rate, "SinOsc", inputs=[uf, uph], ou=1)
+    #return mk_oscillator(rate, "SinOsc", inputs=const_list(freq, phase), ou=1)
 
 def line(a, b, c, d, rate: Rate=Rate.RateAr) -> Ugen:
     return mk_oscillator(rate, "Line", inputs=const_list(a, b, c, d), ou=1)
@@ -42,7 +45,11 @@ def lf_noise2 (a, rate: Rate=Rate.RateAr):
 
 def env_gen(a, b, c, d, e, ugen, rate: Rate=Rate.RateAr):
     return mk_osc_mce(rate=rate, name="EnvGen", inputs=const_list(a, b, c, d, e), ugen=ugen, ou=1)
+
 # filters
+def out(a, b):
+    mk_filter_mce(name="Out", inputs=const_list(a), ugen=b, ou=0)
+
 def decay2(a, b, c):
     return mk_filter(name="Decay2", inputs=const_list(a, b, c), ou=1)
 

@@ -70,8 +70,13 @@ n4 = mk_node(p4, gr1)
 nn4 = n4[0]
 syn1 = synthdef("anonymous", sin_osc(400, 0))
 bsyn1 = b'SCgf\x00\x00\x00\x00\x00\x01\tanonymous\x00\x02\x00\x00\x00\x00C\xc8\x00\x00\x00\x00\x00\x00\x00\x01\x06SinOsc\x01\x00\x02\x00\x01\x00\x00\xff\xff\x00\x01\xff\xff\x00\x00\x01'
-
-
+"""
+0x53, 0x43, 0x67, 0x66, 0, 0, 0, 0, 0, 1, 0x9,
+    		0x61, 0x6e, 0x6f, 0x6e, 0x79, 0x6d, 0x6f, 0x75, 0x73,
+			0, 2,  0, 0, 0, 0,   0x43, 0xdc,  0, 0, 0, 0, 0, 0, 0, 1, 6,
+			0x53, 0x69, 0x6e, 0x4f, 0x73, 0x63, 1, 0, 2, 0, 1, 0, 0,
+			0xff, 0xff, 0, 1, 0xff, 0xff, 0, 0, 1;
+"""
 class TestStringMethods(unittest.TestCase):
 
     def test1(self):

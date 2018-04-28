@@ -1,11 +1,12 @@
 from ugens import *
-from osc_1 import  sc_start, sc_stop, osc_send
-from sc3_1 import synthdef
+from sc3_1 import sc_start, sc_stop, sc_play
+
 
 sc_start()
 freq = 440
 ug = add(sin_osc(3*freq), sin_osc(6))
-osc_send(synthdef("HH", ug))
+ug = sin_osc(3*freq)
+sc_play(out(0, sin_osc(440, 0, Rate.RateAr)))
 
 sc_stop()
 

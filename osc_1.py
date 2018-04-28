@@ -2,13 +2,14 @@ import struct
 from typing import Union, List
 import socket
 
+
 BYTEORDER = "big"
 
 
 Datum = Union[int, float, str, bytes]
 
 class Message:
-    def __init__(self, name: str, ldatum: List[Datum]):
+    def __init__(self, name: str, ldatum: List[Datum]) -> None:
         self.name = name
         self.ldatum = ldatum
 
@@ -70,7 +71,7 @@ def str_pstr(st: str) -> bytes:
     return encode_i8(len(st)) + st.encode()
 
 def align(n: int):
-    return 4 - n%4
+    return 4 - n % 4
 
 def extend_(pad: bytes, bts: bytes) -> bytes:
     n = align(len(bts))
@@ -126,7 +127,7 @@ def osc_setport(port: int):
 def osc_send(msg: bytes):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.sendto(msg, (UDP_IP, UDP_PORT))
-    sock.settimeout(2) #2 secs timeout
+    sock.settimeout(2)  # 2 secs timeout
     try:
         rec = sock.recv(1024)
         print(rec)
@@ -138,13 +139,3 @@ def send_message(msg: Message):
     #print(bmsg)
     osc_send(bmsg)
 
-def sc_start():
-    osc_setport(57110)
-    msg1 = Message(name="/notify", ldatum=[1])
-    send_message(msg1)
-    msg1 = Message(name="/g_new", ldatum=[1, ADD_TO_TAIL, 0])
-    send_message(msg1)
-
-def sc_stop():
-    msg1 = Message(name="/g_deepFree", ldatum=[0])
-    send_message(msg1)
