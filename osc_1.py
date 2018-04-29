@@ -136,6 +136,6 @@ def osc_send(msg: bytes):
 
 def send_message(msg: Message):
     bmsg = encode_message(msg)
-    #print(bmsg)
+    print(bmsg)  # DEBUG
     osc_send(bmsg)
 

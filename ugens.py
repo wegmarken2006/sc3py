@@ -31,7 +31,7 @@ def const_list(*args) -> List[Constant]:
     return out
 
 # oscillators
-def sin_osc(freq, phase=0, rate: Rate=Rate.RateKr) -> Ugen:
+def sin_osc(freq, phase=0, rate: Rate=Rate.RateAr) -> Ugen:
     uf = Constant(freq)
     uph = Constant(phase)
     return mk_oscillator(rate, "SinOsc", inputs=[uf, uph], ou=1)
@@ -48,7 +48,7 @@ def env_gen(a, b, c, d, e, ugen, rate: Rate=Rate.RateAr):
 
 # filters
 def out(a, b):
-    mk_filter_mce(name="Out", inputs=const_list(a), ugen=b, ou=0)
+    return mk_filter_mce(name="Out", inputs=const_list(a), ugen=b, ou=0)
 
 def decay2(a, b, c):
     return mk_filter(name="Decay2", inputs=const_list(a, b, c), ou=1)

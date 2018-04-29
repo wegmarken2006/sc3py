@@ -7,6 +7,7 @@ Created on Thu Apr  5 20:58:43 2018
 from typing import Union, cast, List, Tuple
 from enum import Enum
 from osc_1 import *
+import ugens
 
 
 class Rate(Enum):
@@ -734,8 +735,10 @@ def sc_stop():
 
 def sc_play(ugen: Ugen):
     name = "anonymous"
-    synd = synthdef(name, ugen)
+    synd = synthdef(name, ugens.out(0, ugen))
     msg1 = Message(name="/d_recv", ldatum=[synd])
+    print(msg1.name)
+    print(msg1.ldatum)
     send_message(msg1)
     msg1 = Message(name="/s_new", ldatum=[name, -1, ADD_TO_TAIL, 1])
     send_message(msg1)

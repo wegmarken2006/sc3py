@@ -6,7 +6,8 @@ sc_start()
 freq = 440
 ug = add(sin_osc(3*freq), sin_osc(6))
 ug = sin_osc(3*freq)
-sc_play(out(0, sin_osc(440, 0, Rate.RateAr)))
+sc_play(sin_osc(440, 0))
+
 
 sc_stop()
 
