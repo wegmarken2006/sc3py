@@ -3,12 +3,20 @@ from sc3_1 import sc_start, sc_stop, sc_play
 
 
 sc_start()
+"""
 freq = 440
 ug = add(sin_osc(3*freq), sin_osc(6))
 ug = sin_osc(3*freq)
-sc_play(sin_osc(440, 0))
+sc_play(sin_osc(440, 0, mult=0.1))
+sc_play(sin_osc2(440, 0))
+sc_play(mul(sin_osc(440, 0), Constant(0.1)))
 
+x = 1000
+ug2 = add(sin_osc(300 * x + 800, 0), pink_noise(0.1 * x + 0.1))
+sc_play(ug2)
+"""
 
+sc_play(sin_osc2(440, 0))
 sc_stop()
 
 """

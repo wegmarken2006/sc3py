@@ -413,7 +413,7 @@ def fetch(val: int, lst: List[int]) -> int:
     for ind, elem in enumerate(lst):
         if elem == val:
             return ind
-    return -1
+    return 0  # -1 TO BE VERIFIED
 
 
 def find_c_p(val, node: Node) -> bool:
@@ -659,7 +659,6 @@ def encode_graphdef(name: str, graph: Graph) -> bytes:
         return encode_node_u(mm, us)
 
     a11 = [elem for elem in map(f2, graph.ugens)]
-
     return a1 + a2 + a3 + a4 + a41 + b''.join(a5) + a6 + b''.join(a7) + a8 + b''.join(a9) + a10 + b''.join(a11)
 
 
@@ -737,8 +736,6 @@ def sc_play(ugen: Ugen):
     name = "anonymous"
     synd = synthdef(name, ugens.out(0, ugen))
     msg1 = Message(name="/d_recv", ldatum=[synd])
-    print(msg1.name)
-    print(msg1.ldatum)
     send_message(msg1)
     msg1 = Message(name="/s_new", ldatum=[name, -1, ADD_TO_TAIL, 1])
     send_message(msg1)
