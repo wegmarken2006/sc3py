@@ -9,6 +9,13 @@ from enum import Enum
 from osc_1 import *
 import ugens
 
+uid = 0
+
+def next_uid():
+    global uid
+    uid = uid + 1
+    return uid
+
 
 class Rate(Enum):
     RateIr = 0
@@ -413,7 +420,7 @@ def fetch(val: int, lst: List[int]) -> int:
     for ind, elem in enumerate(lst):
         if elem == val:
             return ind
-    return 0  # -1 TO BE VERIFIED
+    raise Exception("fetch")
 
 
 def find_c_p(val, node: Node) -> bool:
@@ -614,7 +621,7 @@ def make_input(mm: MMap, fp: Ugen) -> Input:
         p = fetch(fp.port_nid, mm.ks)
         return Input(u=0, p=p)
     if isinstance(fp, FromPortU):
-        u = fetch(fp.port_nid, mm.cs)
+        u = fetch(fp.port_nid, mm.us)
         return Input(u=u, p=fp.port_idx)
     else:
         raise Exception("make_input")
@@ -674,11 +681,11 @@ def mk_osc_mce(rate: Rate, name: str, inputs: List[Ugen], ugen: Ugen, ou: int) -
     return mk_ugen(name=name, inputs=inputs + mce_channels(ugen), outputs=rl, ind=0, sp=0, rate=rate)
 
 
-def mk_osc_id(rate: Rate, name: str, inputs: List[Ugen], ou: int, uid: int = 0) -> Ugen:
+def mk_osc_id(rate: Rate, name: str, inputs: List[Ugen], ou: int) -> Ugen:
     rl: List[Rate] = []
     for ii in range(0, ou):
         rl.append(rate)
-    return mk_ugen(name=name, inputs=inputs, outputs=rl, ind=0, sp=uid, rate=rate)
+    return mk_ugen(name=name, inputs=inputs, outputs=rl, ind=next_uid(), sp=0, rate=rate)
 
 
 def mk_oscillator(rate: Rate, name: str, inputs: List[Ugen], ou: int) -> Ugen:
@@ -701,22 +708,22 @@ def mk_filter_mce(name: str, inputs: List[Ugen], ugen: Ugen, ou: int) -> Ugen:
     return mk_filter(name=name, inputs=inputs + mce_channels(ugen), ou=ou)
 
 
-def mk_operator(name: str, inputs: List[Ugen], ind: int = 0) -> Ugen:
+def mk_operator(name: str, inputs: List[Ugen], sp: int = 0) -> Ugen:
     rates = [elem for elem in map(rate_of, inputs)]
     maxrate = max_rate(rates, Rate.RateIr)
-    return mk_ugen(name=name, inputs=inputs, outputs=[maxrate], ind=ind, sp=0, rate=maxrate)
+    return mk_ugen(name=name, inputs=inputs, outputs=[maxrate], ind=0, sp=sp, rate=maxrate)
 
 
-def mk_unary_operator(ind, fun, ugen: Ugen) -> Ugen:
+def mk_unary_operator(sp: int, fun, ugen: Ugen) -> Ugen:
     if isinstance(ugen, Constant):
         return Constant(fun(ugen.value))
-    return mk_operator("UnaryOpUGen", [ugen], ind)
+    return mk_operator("UnaryOpUGen", [ugen], sp)
 
 
-def mk_binary_operator(ind, fun, ugen1: Ugen, ugen2: Ugen) -> Ugen:
+def mk_binary_operator(sp: int, fun, ugen1: Ugen, ugen2: Ugen) -> Ugen:
     if isinstance(ugen1, Constant) and isinstance(ugen2, Constant):
         return Constant(fun(ugen1.value, ugen2.value))
-    return mk_operator("BinaryOpUGen", [ugen1, ugen2], ind)
+    return mk_operator("BinaryOpUGen", [ugen1, ugen2], sp)
 
 
 def sc_start():

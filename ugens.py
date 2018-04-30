@@ -24,12 +24,6 @@ class UgensPlay(UgensRate):
     def play(self):
         sc_play(self.func(*self.args, rate=self.rate))
 
-uid = 0
-
-def next_uid():
-    global uid
-    uid = uid + 1
-    return uid
 
 # unary
 def u_abs(ugen: Ugen):
@@ -73,10 +67,10 @@ def line(a, b, c, d, rate: Rate=Rate.RateAr) -> Ugen:
     return mk_oscillator(rate, "Line", inputs=const_list(a, b, c, d), ou=1)
 
 def lf_noise2(a, rate: Rate=Rate.RateAr):
-    return mk_osc_id(rate=rate, name="LFNoise2", inputs=const_list(a),  ou=1, uid=next_uid())
+    return mk_osc_id(rate=rate, name="LFNoise2", inputs=const_list(a),  ou=1)
 
 def pink_noise(a, rate: Rate=Rate.RateAr):
-    return mk_osc_id(rate=rate, name="PinkNoise", inputs=const_list(a),  ou=1, uid=next_uid())
+    return mk_osc_id(rate=rate, name="PinkNoise", inputs=const_list(a),  ou=1)
 
 def env_gen(a, b, c, d, e, ugen, rate: Rate=Rate.RateAr):
     return mk_osc_mce(rate=rate, name="EnvGen", inputs=const_list(a, b, c, d, e), ugen=ugen, ou=1)
