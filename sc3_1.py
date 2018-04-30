@@ -714,16 +714,22 @@ def mk_operator(name: str, inputs: List[Ugen], sp: int = 0) -> Ugen:
     return mk_ugen(name=name, inputs=inputs, outputs=[maxrate], ind=0, sp=sp, rate=maxrate)
 
 
-def mk_unary_operator(sp: int, fun, ugen: Ugen) -> Ugen:
-    if isinstance(ugen, Constant):
-        return Constant(fun(ugen.value))
-    return mk_operator("UnaryOpUGen", [ugen], sp)
+def mk_unary_operator(sp: int, fun, op) -> Ugen:
+    if isinstance(op, Constant):
+        return Constant(fun(op.value))
+    elif type(op) == int or type(op) == float:
+        op = Constant(value=op)
+    return mk_operator("UnaryOpUGen", [op], sp)
 
 
-def mk_binary_operator(sp: int, fun, ugen1: Ugen, ugen2: Ugen) -> Ugen:
-    if isinstance(ugen1, Constant) and isinstance(ugen2, Constant):
-        return Constant(fun(ugen1.value, ugen2.value))
-    return mk_operator("BinaryOpUGen", [ugen1, ugen2], sp)
+def mk_binary_operator(sp: int, fun, op1, op2) -> Ugen:
+    if isinstance(op1, Constant) and isinstance(op2, Constant):
+        return Constant(fun(op1.value, op2.value))
+    elif type(op1) == int or type(op1) == float:
+        op1 = Constant(value=op1)
+    elif type(op2) == int or type(op2) == float:
+        op2 = Constant(value=op2)
+    return mk_operator("BinaryOpUGen", [op1, op2], sp)
 
 
 def sc_start():
@@ -739,9 +745,13 @@ def sc_stop():
     send_message(msg1)
 
 
-def sc_play(ugen: Ugen):
+def sc_play(ugen):
     name = "anonymous"
-    synd = synthdef(name, ugens.out(0, ugen))
+    if isinstance(ugen, List):
+        synd = synthdef(name, ugens.out(0, ugen))
+    else:
+        synd = synthdef(name, ugens.out(0, ugen))
+
     msg1 = Message(name="/d_recv", ldatum=[synd])
     send_message(msg1)
     msg1 = Message(name="/s_new", ldatum=[name, -1, ADD_TO_TAIL, 1])
