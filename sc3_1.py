@@ -479,9 +479,17 @@ def mk_node_k(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
         raise Exception("mk_node_k")
 
 
-def find_u_p(rate: Rate, name: str, id1, node: Node) -> bool:
+def find_u_p(ugen: Primitive, node: Node) -> bool:
     if isinstance(node, NodeU):
-        if node.rate == rate and node.name == name and node.ugen_id == id1:
+        b1 = node.rate == ugen.rate
+        b2 = node.name == ugen.name
+        b3 = node.ugen_id == ugen.index
+        b4 = node.outputs == ugen.outputs
+        b5 = node.special == ugen.special
+        if b1 and b2 and b3 and b4 and b5:
+            for ind, elem in enumerate(node.inputs):
+                if not (elem.port_nid == ugen.inputs[ind].port_nid):
+                    return False
             return True
         else:
             return False
@@ -490,9 +498,9 @@ def find_u_p(rate: Rate, name: str, id1, node: Node) -> bool:
 
 def push_u(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
     if isinstance(ugen, Primitive):
-        intrates = [elem for elem in map(rate_id, ugen.outputs)]
+        #intrates = [elem for elem in map(rate_id, ugen.outputs)]
         node = NodeU(nid=gr.next_id + 1, name=ugen.name, rate=ugen.rate,
-                     inputs=ugen.inputs, outputs=intrates, special=ugen.special,
+                     inputs=ugen.inputs, outputs=ugen.outputs, special=ugen.special,
                      ugen_id=ugen.index)
         ugens = [node]
         ugens = ugens + gr.ugens
@@ -532,14 +540,12 @@ def mk_node_u(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
         inputs2: List[Ugen] = []
         for nd in ng1:
             inputs2.append(as_from_port(nd))
-        rate = ugen.rate
-        name = ugen.name
-        index = ugen.index
+        pr = Primitive(name=ugen.name, rate=ugen.rate, inputs=inputs2,
+                       outputs=ugen.outputs, index=ugen.index, special=ugen.special)
         for nd2 in gnew.ugens:
-            if find_u_p(rate=rate, name=name, id1=index, node=nd2):
+            if find_u_p(ugen=pr, node=nd2):
                 return nd2, gnew
-        pr = Primitive(name=name, rate=rate, inputs=inputs2,
-                       outputs=ugen.outputs, special=ugen.special)
+
         tup: Tuple[Node, Graph] = push_u(pr, gnew)
         return tup
     else:
@@ -549,14 +555,21 @@ def mk_node_u(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
 def mk_node(ugen: Ugen, gr: Graph) -> Tuple[Node, Graph]:
     if isinstance(ugen, Constant):
         return mk_node_c(ugen, gr)
+    elif isinstance(ugen, Control):
+        return mk_node_k(ugen, gr)
     elif isinstance(ugen, Primitive):
         return mk_node_u(ugen, gr)
     elif isinstance(ugen, Mrg):
         gn = mk_node(ugen.right, gr)
         g1 = gn[1]
         return mk_node(ugen.left, g1)
+    elif isinstance(ugen, Mce):
+        raise Exception("mk_node - Mce")
+    elif isinstance(ugen, Proxy):
+        raise Exception("mk_node - proxy")
     else:
-        raise Exception("mk_node")
+        raise Exception("mk_node - other")
+
 
 
 def implicit(num):
@@ -633,7 +646,8 @@ def encode_node_u(mm: MMap, nu: NodeU) -> bytes:
 
     l1 = [elem for elem in map(f1, nu.inputs)]
     i2 = [elem for elem in map(encode_input, l1)]
-    o2 = [elem for elem in map(encode_i8, nu.outputs)]
+    intrates = [elem for elem in map(rate_id, nu.outputs)]
+    o2 = [elem for elem in map(encode_i8, intrates)]
     a1 = str_pstr(nu.name)
     a2 = encode_i8(rate_id(nu.rate))
     a3 = encode_i16(len(nu.inputs))
@@ -748,10 +762,8 @@ def sc_stop():
 def sc_play(ugen):
     name = "anonymous"
     if isinstance(ugen, List):
-        synd = synthdef(name, ugens.out(0, ugen))
-    else:
-        synd = synthdef(name, ugens.out(0, ugen))
-
+         ugen = Mce(ugens=ugen)
+    synd = synthdef(name, ugens.out(0, ugen))
     msg1 = Message(name="/d_recv", ldatum=[synd])
     send_message(msg1)
     msg1 = Message(name="/s_new", ldatum=[name, -1, ADD_TO_TAIL, 1])
