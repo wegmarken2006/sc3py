@@ -717,6 +717,13 @@ def mk_filter(name: str, inputs: List[Ugen], ou: int, sp: int = 0) -> Ugen:
         ou_list.append(maxrate)
     return mk_ugen(name=name, inputs=inputs, outputs=ou_list, ind=0, sp=sp, rate=maxrate)
 
+def mk_filter_id(name: str, inputs: List[Ugen], ou: int, sp: int = 0) -> Ugen:
+    rates = [elem for elem in map(rate_of, inputs)]
+    maxrate = max_rate(rates, Rate.RateIr)
+    ou_list: List[Rate] = []
+    for _ in range(0, ou):
+        ou_list.append(maxrate)
+    return mk_ugen(name=name, inputs=inputs, outputs=ou_list, ind=next_uid(), sp=sp, rate=maxrate)
 
 def mk_filter_mce(name: str, inputs: List[Ugen], ugen: Ugen, ou: int) -> Ugen:
     return mk_filter(name=name, inputs=inputs + mce_channels(ugen), ou=ou)

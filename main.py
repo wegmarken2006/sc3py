@@ -1,36 +1,46 @@
 from ugens import *
-from sc3_1 import sc_start, sc_stop, sc_play, Mrg, Mce
+from sc3_1 import sc_start, sc_stop, sc_play
 
 
 sc_start()
 
+"""
+# stereo
 s1 = mul(sin_osc2(440, 0), 0.1)
 s2 = mul(sin_osc2(100, 0), 0.1)
 sc_play([s1, s2])
 
 """
-ug1 = mul(rhpf(one_pole(brown_noise(), 0.99), add(mul(lpf(brown_noise(), 14), 400), 500), 0.03), 0.003)
-ug2 = mul(rhpf(one_pole(brown_noise(), 0.99), add(mul(lpf(brown_noise(), 20), 800), 1000), 0.03), 0.005)
-ug3 = mul(add(ug1, ug2), 4)
-ug10 = one_pole(brown_noise(), 0.99)
-ug11 = mul(lpf(brown_noise(), 14), 400)
-ug12 = rhpf(one_pole(brown_noise(), 0.99), add(mul(lpf(brown_noise(), 14), 400), 500), 0.03)
-ug13 = mul(lpf(brown_noise(), 14), 100)
+"""
+# bubbles
+ug20 = one_pole(brown_noise(), 0.99)
+ug21 = lpf(brown_noise(), 14)
+ug22 = add(mul(ug21, 400), 500)
+ug100 = mul(rhpf(ug20, ug22, 0.03), 0.03)
 
-sc_play(ug13)
+sc_play([ug100, ug100])
 """
 
+
+trig = impulse(freq=1000, phase=0)
+ug1 = ringz(t2a(trig), 800, 0.01)
+
+ug10 = ringz(dust(3), 2000, 2)
+
+sc_play(ug1)
 sc_stop()
 
-"""
-{
-({RHPF.ar(OnePole.ar(BrownNoise.ar, 0.99), LPF.ar(BrownNoise.ar, 14)
-* 400 + 500, 0.03, 0.003)}!2)
-+ ({RHPF.ar(OnePole.ar(BrownNoise.ar, 0.99), LPF.ar(BrownNoise.ar, 20)
-* 800 + 1000, 0.03, 0.005)}!2)
-* 4
-}.play
 
+
+"""
+(defcgen kick-drum
+  "basic synthesised kick drum"
+  [bpm {:default 120 :doc "tempo of kick in beats per minute"}
+   pattern {:default [1 0] :doc "sequence pattern of beats"}]
+  (:ar
+   (let [kickenv (decay (t2a (demand (impulse:kr (/ bpm 30)) 0 (dseq pattern INF))) 0.7)
+         kick (* (* kickenv 7) (sin-osc (+ 40 (* kickenv kickenv kickenv 200))))]
+     (clip2 kick 1))))
 """
 
 """
@@ -42,4 +52,4 @@ sc_stop()
       (* (sin-osc (* freq 2)))
       (clip2 (line:kr 1 land 16))
       (* volume)))
-      """
+"""
