@@ -119,8 +119,14 @@ def env_gen(a, b, c, d, e, ugen, rate: Rate=Rate.RateAr):
 def clip(a, b, c):
     return mk_filter(name="Clip", inputs=const_list(a, b, c), ou=1)
 
+def decay(in1, d_time):
+    return mk_filter(name="Decay", inputs=const_list(in1, d_time), ou=1)
+
 def decay2(a, b, c):
     return mk_filter(name="Decay2", inputs=const_list(a, b, c), ou=1)
+
+#def demand(a, b, c):
+#    return mk_filter(name="Demand", inputs=const_list(a, b, c), ou=1)
 
 def lpf(a, b):
     return mk_filter(name="LPF", inputs=const_list(a, b), ou=1)

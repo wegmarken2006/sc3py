@@ -576,7 +576,7 @@ def implicit(num):
     rates: List[Rate] = []
     for ind in range(1, num + 1):
         rates.append(Rate.RateKr)
-    node = NodeU(nid=-1, name="Control", inputs=[], outputs=[], ugen_id=0, special=0, rate=Rate.RateKr)
+    node = NodeU(nid=-1, name="Control", inputs=[], outputs=rates, ugen_id=0, special=0, rate=Rate.RateKr)
     return node
 
 
