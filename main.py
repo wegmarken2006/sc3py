@@ -4,13 +4,13 @@ from sc3_1 import sc_start, sc_stop, sc_play
 
 sc_start()
 
-"""
+
 # stereo
 s1 = mul(sin_osc2(440, 0), 0.1)
 s2 = mul(sin_osc2(100, 0), 0.1)
 sc_play([s1, s2])
 
-"""
+sc_stop()
 """
 # bubbles
 ug20 = one_pole(brown_noise(), 0.99)
@@ -21,7 +21,7 @@ ug100 = mul(rhpf(ug20, ug22, 0.03), 0.03)
 sc_play([ug100, ug100])
 """
 
-
+""" ago 2018
 trig = impulse(freq=1000, phase=0)
 ug1 = ringz(t2a(trig), 800, 0.01)
 
@@ -29,7 +29,7 @@ ug10 = ringz(dust(3), 2000, 2)
 
 sc_play(ug1)
 sc_stop()
-
+"""
 
 
 """

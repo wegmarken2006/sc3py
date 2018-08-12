@@ -1,6 +1,7 @@
 import struct
 from typing import Union, List
 import socket
+import threading
 
 
 BYTEORDER = "big"
@@ -119,17 +120,36 @@ def encode_message(msg: Message) -> bytes:
 UDP_IP = "127.0.0.1"
 UDP_PORT = 57110
 ADD_TO_TAIL = 1
+Sock = None
+Recv_thread = None
 
 def osc_setport(port: int):
     global UDP_PORT
+    global Sock
+    global Recv_thread
     UDP_PORT = port
+    Sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    
+    
 
 def osc_send(msg: bytes):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.sendto(msg, (UDP_IP, UDP_PORT))
-    sock.settimeout(2)  # 2 secs timeout
+    global Sock
+    global Recv_thread
+ 
+    #sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    Sock.sendto(msg, (UDP_IP, UDP_PORT))
+    Sock.settimeout(2)  # 2 secs timeout
+
+    Recv_thread = threading.Thread(target=osc_recv)
+    Recv_thread.start()
+    #Recv_thread.join()
+
+def osc_recv():
+    global Sock
     try:
-        rec = sock.recv(1024)
+        rec = Sock.recv(1024)
+        print("Received: ")
         print(rec)
     except:
         pass
