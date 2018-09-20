@@ -152,8 +152,15 @@ def print_ugen(ugen: Ugen):
         print("MC Ulen: " + str(len(ugen.ugens)))
     elif isinstance(ugen, Mrg):
         print("MG")
+    elif isinstance(ugen, FromPortC):
+        print("FC nid: " + str(ugen.port_nid))
+    elif isinstance(ugen, FromPortK):
+        print("FK nid: " + str(ugen.port_nid))
+    elif isinstance(ugen, FromPortU):
+        print("FU nid: " + str(ugen.port_nid))
     else:
-        pass
+        print("Other")
+
 
 
 def template(ugen: Ugen):
@@ -662,7 +669,6 @@ def make_input(mm: MMap, fp: Ugen) -> Input:
 def encode_node_u(mm: MMap, nu: NodeU) -> bytes:
     def f1(ug: Ugen) -> Input:
         return make_input(mm, ug)
-
     l1 = [elem for elem in map(f1, nu.inputs)]
     i2 = [elem for elem in map(encode_input, l1)]
     intrates = [elem for elem in map(rate_id, nu.outputs)]
