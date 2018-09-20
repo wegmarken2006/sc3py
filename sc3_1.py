@@ -139,15 +139,17 @@ class Input:
 
 def print_ugen(ugen: Ugen):
     if isinstance(ugen, Constant):
-        print("C Value: " + ugen.value)
+        print("C Value: " + str(ugen.value))
     elif isinstance(ugen, Control):
         print("K Name: " + ugen.name)
     elif isinstance(ugen, Primitive):
         print("P Name: " + ugen.name)
+        for elem in ugen.inputs:
+            print_ugen(elem)
     elif isinstance(ugen, Proxy):
         print("Px Name: " + ugen.primitive.name)
     elif isinstance(ugen, Mce):
-        print("MC Ulen: " + len(ugen.ugens)
+        print("MC Ulen: " + str(len(ugen.ugens)))
     elif isinstance(ugen, Mrg):
         print("MG")
     else:
@@ -619,6 +621,7 @@ def empty_graph() -> Graph:
 
 
 def synth(ugen: Ugen) -> Graph:
+    #print_ugen(ugen)
     root = prepare_root(ugen)
     gn = mk_node(root, empty_graph())
     gr = gn[1]
