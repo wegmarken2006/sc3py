@@ -137,6 +137,22 @@ class Input:
         self.u = u
         self.p = p
 
+def print_ugen(ugen: Ugen):
+    if isinstance(ugen, Constant):
+        print("C Value: " + ugen.value)
+    elif isinstance(ugen, Control):
+        print("K Name: " + ugen.name)
+    elif isinstance(ugen, Primitive):
+        print("P Name: " + ugen.name)
+    elif isinstance(ugen, Proxy):
+        print("Px Name: " + ugen.primitive.name)
+    elif isinstance(ugen, Mce):
+        print("MC Ulen: " + len(ugen.ugens)
+    elif isinstance(ugen, Mrg):
+        print("MG")
+    else:
+        pass
+
 
 def template(ugen: Ugen):
     if isinstance(ugen, Constant):
